@@ -7,11 +7,9 @@ import kotlinx.coroutines.flow.StateFlow
 // Representa un ítem en el carrito de compras con un producto y su cantidad
 data class CartItem(val product: ProductEntity, val quantity: Int)
 
-// Objeto singleton que gestiona el estado del carrito de compras.
+// Gestiona el estado del carrito de compras.
 object Cart {
-    // _items es un flujo mutable privado que contiene la lista de ítems del carrito
     private val _items = MutableStateFlow<List<CartItem>>(emptyList())
-    // items expone el estado del carrito como un flujo inmutable de solo lectura
     val items: StateFlow<List<CartItem>> = _items
 
     // Añade un producto al carrito o incrementa su cantidad si ya existe
