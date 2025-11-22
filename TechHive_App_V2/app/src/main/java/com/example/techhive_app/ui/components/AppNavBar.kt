@@ -1,12 +1,21 @@
 package com.example.techhive_app.ui.components
 
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -18,39 +27,46 @@ fun AppNavBar(
     onProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showLogoutDialog by remember { mutableStateOf(false) }
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
-    ) {
-        //INICIO
+    // Solo para marcar cuál tab está “seleccionada” visualmente
+    var selectedIndex by remember { mutableIntStateOf(0) }
+
+    NavigationBar {
+        // HOME
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
             label = { Text("Inicio") },
-            selected = false,
-            onClick = { onHome() }
+            selected = selectedIndex == 0,
+            onClick = {
+                selectedIndex = 0
+                onHome()
+            }
         )
 
-        //Productos
+        // CATEGORÍAS / PRODUCTOS
         NavigationBarItem(
             icon = { Icon(Icons.Default.Category, contentDescription = "Productos") },
             label = { Text("Productos") },
-            selected = false,
-            onClick = { onCategories() }
+            selected = selectedIndex == 1,
+            onClick = {
+                selectedIndex = 1
+                onCategories()
+            }
         )
 
-        //CARRITO
+        // CARRITO
         NavigationBarItem(
             icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito") },
             label = { Text("Carrito") },
-            selected = false,
-            onClick = { onCart() }
+            selected = selectedIndex == 2,
+            onClick = {
+                selectedIndex = 2
+                onCart()
+            }
         )
 
-        //PERFIL / LOGIN
+        // PERFIL / LOGIN
         NavigationBarItem(
             icon = {
                 Icon(
@@ -59,39 +75,15 @@ fun AppNavBar(
                 )
             },
             label = { Text(if (isLoggedIn) "Cuenta" else "Iniciar Sesión") },
-            selected = false,
+            selected = selectedIndex == 3,
             onClick = {
+                selectedIndex = 3
                 if (isLoggedIn) {
-                    // Si está logueado, mostrar diálogo para ir al perfil o cerrar sesión
-                    showLogoutDialog = true
-                } else {
-                    // Si no está logueado, ir al Home (logo + botones login/registro)
+                    // Si ya está logueado → dejamos que el NavGraph decida adónde ir
                     onProfile()
-                }
-            }
-        )
-    }
-
-    // Diálogo de cierre de sesión
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Perfil de usuario") },
-            text = { Text("¿Deseas ir a tu perfil o cerrar sesión?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showLogoutDialog = false
-                    onProfile() // Navega al perfil
-                }) {
-                    Text("Ver perfil")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showLogoutDialog = false
-                    scope.launch { onLogout() } // Cierra sesión
-                }) {
-                    Text("Cerrar sesión")
+                } else {
+                    // Si NO está logueado → también lo decide el NavGraph (login / home)
+                    onProfile()
                 }
             }
         )

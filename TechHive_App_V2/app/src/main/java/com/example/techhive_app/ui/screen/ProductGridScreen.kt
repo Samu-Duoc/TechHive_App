@@ -28,6 +28,9 @@ fun ProductGridScreen(
 
     val products = uiState.products
 
+    // 👉 MOSTRAR SOLO UNA CARÁTULA POR SKU
+    val productsForGrid = products.distinctBy { it.sku }
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -35,7 +38,7 @@ fun ProductGridScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(products) { product ->
+        items(productsForGrid) { product ->
             ProductGridCard(
                 product = product,
                 onClick = { onProductClick(product.id) }

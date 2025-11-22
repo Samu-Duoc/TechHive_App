@@ -20,12 +20,13 @@ object MockColorVariants {
                 ColorVariant("Azul Noche", "sony_wh1000xm4_azul")
             )
 
-            //iPhone 12 Reacondicionado -> sku = "SMT-APL-005"
+            // iPhone 12 Reacondicionado -> sku = "SMT-APL-005"
             "SMT-APL-005" -> listOf(
-                ColorVariant("Azul", "iphone12_azul"),
-                ColorVariant("Blanco", "iphone12_blanco"),
-                ColorVariant("Morado", "iphone12_morado")
+                ColorVariant("Azul", "iphone_12_azul"),
+                ColorVariant("Blanco", "iphone_12_blanco"),
+                ColorVariant("Morado", "iphone_12_morado")
             )
+
 
             // Samsung Galaxy S21 -> sku = "SMT-SAM-004"
             "SMT-SAM-004" -> listOf(

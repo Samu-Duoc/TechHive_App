@@ -24,8 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-
-
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -53,8 +51,11 @@ fun AppNavGraph(
     val goProducts: () -> Unit = { navController.navigate(Route.ProductList.path) }
     val goToCart: () -> Unit = { navController.navigate(Route.Cart.path) }
     val goToProfile: () -> Unit = {
-        if (isLoggedIn) navController.navigate(Route.Profile.path) else goLogin()
+        if (isLoggedIn) navController.navigate(Route.ProfileMenu.path) else goLogin()
     }
+
+// ...
+
     val onLoggedOut: () -> Unit = { goHome() }
 
     Scaffold(
@@ -91,7 +92,7 @@ fun AppNavGraph(
             startDestination = Route.Splash.path,   // SIEMPRE arranca en Splash
             modifier = Modifier.padding(innerPadding)
         ) {
-            // 🟣 SPLASH
+            // SPLASH
             composable(Route.Splash.path) {
                 SplashScreen(
                     onTimeout = {
@@ -176,7 +177,60 @@ fun AppNavGraph(
 
             // CARRITO
             composable(Route.Cart.path) {
-                CartScreen()
+                CartScreen(
+                    onCheckout = { orderId ->
+                        if (orderId != -1L) {
+                            navController.navigate(Route.OrderConfirmation.createRoute(orderId))
+                        }
+                    }
+                )
+            }
+
+            // COMPROBANTE / DETALLE DE ORDEN
+            composable(
+                route = Route.OrderConfirmation.path,
+                arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getLong("orderId") ?: -1L
+                OrderConfirmationScreen(
+                    orderId = orderId,
+                    onGoHome = {
+                        navController.navigate(Route.Inicio.path) {
+                            popUpTo(Route.Inicio.path) { inclusive = true }
+                        }
+                    },
+                    onGoHistory = {
+                        navController.navigate(Route.OrderHistory.path)
+                    }
+                )
+            }
+
+            // HISTORIAL DE COMPRAS
+            composable(Route.OrderHistory.path) {
+                OrderHistoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onOrderSelected = { id ->
+                        navController.navigate(Route.OrderConfirmation.createRoute(id))
+                    }
+                )
+            }
+
+            // PANTALLA DE MENU DEL PERFIL
+            composable(Route.ProfileMenu.path) {
+
+                ProfileMenuScreen(
+                    onEditProfile = { navController.navigate(Route.Profile.path) },
+                    onAddress = { navController.navigate("address") },
+                    onHistory = { navController.navigate(Route.OrderHistory.path) },
+                    onLogout = {
+                        onLoggedOut()
+                    }
+                )
+            }
+
+            // DIRECCIÓN DE ENVÍO
+            composable("address") {
+                AddressScreen(onBack = { navController.popBackStack() })
             }
 
             // PERFIL

@@ -54,17 +54,17 @@ fun ProfileScreen(authViewModel: AuthViewModel, onLoggedOut: () -> Unit) {
     var userName by remember { mutableStateOf("") }
     var userPhone by remember { mutableStateOf("") }
 
-    LaunchedEffect(key1 = userEmail ?: "") {
+    LaunchedEffect(userEmail) {
         if (!userEmail.isNullOrBlank()) {
-            val result = authViewModel.getUserDetails(userEmail!!)
-            result.onSuccess { user ->
-                userName = user.name
-                userPhone = user.phone
+            authViewModel.getUserDetails(userEmail!!).onSuccess { user ->
+                userName = user.name ?: ""
+                userPhone = user.phone ?: ""
+            }.onFailure {
+                userName = ""
+                userPhone = ""
             }
         }
     }
-
-
 
     var pendingCaptureUri by remember { mutableStateOf<Uri?>(null) }
     val takePictureLauncher = rememberLauncherForActivityResult(

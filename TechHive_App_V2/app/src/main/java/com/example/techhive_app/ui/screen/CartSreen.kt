@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,17 +15,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import com.example.techhive_app.data.local.cart.Cart
 import com.example.techhive_app.data.local.cart.CartItem
+import com.example.techhive_app.data.local.order.OrderManager
 import com.example.techhive_app.ui.util.formatPrice
 
 @Composable
 fun CartScreen(
-    onCheckout: () -> Unit = {}    // por si luego quieres navegar a "orden de pago"
+    onCheckout: (Long) -> Unit = {}  // devuelve orderId
 ) {
     val cartItems by Cart.items.collectAsState()
     val context = LocalContext.current
@@ -76,10 +77,21 @@ fun CartScreen(
 
                 Button(
                     onClick = {
-                        // Por ahora solo mostramos mensaje y limpiamos carrito
-                        Toast.makeText(context, "¡Gracias por tu compra!", Toast.LENGTH_SHORT).show()
-                        Cart.clearCart()
-                        onCheckout()
+                        val orderId = OrderManager.createOrderFromCart()
+                        if (orderId == -1L) {
+                            Toast.makeText(
+                                context,
+                                "No hay productos en el carrito",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Orden creada #$orderId",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onCheckout(orderId)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -103,7 +115,6 @@ private fun CartItemRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // Imagen del producto
             Image(
                 painter = painterResource(id = item.product.imageUrl),
                 contentDescription = item.product.name,
@@ -112,7 +123,6 @@ private fun CartItemRow(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Info básica
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.product.name,
@@ -125,7 +135,6 @@ private fun CartItemRow(
                 )
             }
 
-            // Controles de cantidad
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -145,7 +154,6 @@ private fun CartItemRow(
                 }
             }
 
-            // Botón borrar
             IconButton(onClick = onRemove) {
                 Icon(
                     imageVector = Icons.Default.Delete,
