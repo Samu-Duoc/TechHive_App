@@ -79,11 +79,13 @@ abstract class AppDatabase : RoomDatabase() {
                                     ProductEntity(name = "Sony WH-1000XM4", description = "Audífonos inalámbricos con cancelación de ruido de última generación.", price = 249990.0, imageUrl = R.drawable.sony_wh1000xm4_crema, stock = 10, sku = "AUD-SON-014", category = "Audio"),
                                     ProductEntity(name = "Sony WH-1000XM4", description = "Audífonos inalámbricos con cancelación de ruido de última generación.", price = 249990.0, imageUrl = R.drawable.sony_wh1000xm4_azul, stock = 10, sku = "AUD-SON-014", category = "Audio"),
                                     ProductEntity(name = "Sound BlasterX G6", description = "Amplificador de audio DAC/AMP para experiencia de sonido premium.", price = 99990.0, imageUrl = R.drawable.sound_blasterx_g6, stock = 10, sku = "AUD-SBL-015", category = "Audio"),
-                                    ProductEntity(name = "Teclado Mecánico Redragon K630", description = "Teclado retroiluminado mecánico, perfecto para gaming.", price = 179990.0, imageUrl = R.drawable.teclado_redragon_k630, stock = 10, sku = "PER-RED-016", category = "Periféricos"),
 
+                                    ProductEntity(name = "Teclado Mecánico Redragon K630", description = "Teclado retroiluminado mecánico, perfecto para gaming.", price = 179990.0, imageUrl = R.drawable.teclado_redragon_k630, stock = 10, sku = "PER-RED-016", category = "Periféricos"),
                                     ProductEntity(name = "Silla Gamer Cougar Armor", description = "Silla ergonómica con soporte ajustable para largas sesiones.", price = 199990.0, imageUrl = R.drawable.silla_cougar_armor_negra, stock = 5, sku = "PER-COU-017", category = "Periféricos"),
                                     ProductEntity(name = "Silla Gamer Cougar Armor", description = "Silla ergonómica con soporte ajustable para largas sesiones.", price = 199990.0, imageUrl = R.drawable.silla_cougar_armor_naranja, stock = 5, sku = "PER-COU-017", category = "Periféricos"),
-                                    ProductEntity(name = "Silla Gamer Cougar Armor", description = "Silla ergonómica con soporte ajustable para largas sesiones.", price = 199990.0, imageUrl = R.drawable.silla_cougar_armor_rosada, stock = 5, sku = "PER-COU-017", category = "Periféricos")
+                                    ProductEntity(name = "Silla Gamer Cougar Armor", description = "Silla ergonómica con soporte ajustable para largas sesiones.", price = 199990.0, imageUrl = R.drawable.silla_cougar_armor_rosada, stock = 5, sku = "PER-COU-017", category = "Periféricos") ,
+                                    ProductEntity(name = "Mouse Gamer Inalámbrico", description = "Mouse Gamer Inalámbrico ASUS ROG Harpe Ace Aim Lab Edition, 36K DPI, BT, 2.4GHz, 54g, Negro", price = 90000.0, imageUrl = R.drawable.mouse, stock = 20, sku = "PER-COU-018", category = "Periféricos")
+
                                 )
                                 if (productdao.count() == 0) {
                                     productSeed.forEach { productdao.insert(it) }
