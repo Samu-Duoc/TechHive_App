@@ -80,7 +80,7 @@ private fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Login",
+                text = "Iniciar Sesión",
                 style = MaterialTheme.typography.headlineSmall
             )
             Spacer(Modifier.height(12.dp))
