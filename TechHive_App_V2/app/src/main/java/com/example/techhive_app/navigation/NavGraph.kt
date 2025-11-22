@@ -2,7 +2,9 @@ package com.example.techhive_app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue    // 👈 AGREGA ESTO
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,7 +19,12 @@ import com.example.techhive_app.ui.components.AppNavBar
 import com.example.techhive_app.ui.screen.*
 import com.example.techhive_app.ui.viewmodel.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+
+
 
 @Composable
 fun AppNavGraph(
@@ -30,15 +37,24 @@ fun AppNavGraph(
     val userPrefs = remember { UserPreferences(context) }
     val isLoggedIn by userPrefs.isLoggedIn.collectAsStateWithLifecycle(initialValue = false)
 
-
     // --- Navegaciones comunes ---
-    val goHome: () -> Unit = { navController.navigate(Route.Home.path) { popUpTo(Route.Home.path) { inclusive = true } } }
+    val goHome: () -> Unit = {
+        navController.navigate(Route.Home.path) {
+            popUpTo(Route.Home.path) { inclusive = true }
+        }
+    }
     val goLogin: () -> Unit = { navController.navigate(Route.Login.path) }
     val goRegister: () -> Unit = { navController.navigate(Route.Register.path) }
-    val goInicio: () -> Unit = { navController.navigate(Route.Inicio.path) { popUpTo(0) { inclusive = true } } }
+    val goInicio: () -> Unit = {
+        navController.navigate(Route.Inicio.path) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
     val goProducts: () -> Unit = { navController.navigate(Route.ProductList.path) }
     val goToCart: () -> Unit = { navController.navigate(Route.Cart.path) }
-    val goToProfile: () -> Unit = { if (isLoggedIn) navController.navigate(Route.Profile.path) else goLogin() }
+    val goToProfile: () -> Unit = {
+        if (isLoggedIn) navController.navigate(Route.Profile.path) else goLogin()
+    }
     val onLoggedOut: () -> Unit = { goHome() }
 
     Scaffold(
@@ -46,8 +62,8 @@ fun AppNavGraph(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
 
-
             val shouldShowBottomBar = currentRoute !in listOf(
+                Route.Splash.path,   // ocultar bottom bar en Splash
                 Route.Home.path,
                 Route.Login.path,
                 Route.Register.path
@@ -57,7 +73,7 @@ fun AppNavGraph(
                 AppNavBar(
                     isLoggedIn = isLoggedIn,
                     onHome = { goInicio() },
-                    onCategories = { goProducts() },
+                    onCategories = { goProducts() },   // aquí luego le cambias el texto a "Productos"
                     onCart = { goToCart() },
                     onProfile = { goToProfile() },
                     onLogout = {
@@ -66,18 +82,35 @@ fun AppNavGraph(
                         }
                         goHome()
                     }
-
-
                 )
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (isLoggedIn) Route.Inicio.path else Route.Home.path,
+            startDestination = Route.Splash.path,   // SIEMPRE arranca en Splash
             modifier = Modifier.padding(innerPadding)
         ) {
-            // HOME - pantalla inicial pública
+            // 🟣 SPLASH
+            composable(Route.Splash.path) {
+                SplashScreen(
+                    onTimeout = {
+                        if (isLoggedIn) {
+                            // Si ya está logueado -> va a Inicio
+                            navController.navigate(Route.Inicio.path) {
+                                popUpTo(Route.Splash.path) { inclusive = true }
+                            }
+                        } else {
+                            // Si no está logueado -> va a Home público
+                            navController.navigate(Route.Home.path) {
+                                popUpTo(Route.Splash.path) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            // HOME - pantalla inicial pública (landing sin sesión)
             composable(Route.Home.path) {
                 HomeScreen(
                     onGoLogin = goLogin,
@@ -103,20 +136,26 @@ fun AppNavGraph(
                 )
             }
 
-
-
-            // INICIO (categorías)
+            // INICIO (categorías + destacados)
             composable(Route.Inicio.path) {
                 InicioScreen(
-                    onCategoryClick = { goProducts() }
+                    productViewModel = productViewModel,
+                    onCategoryClick = { _ ->
+                        // Por ahora al tocar cualquier categoría abrimos lista completa
+                        goProducts()
+                    },
+                    onViewAllProducts = { goProducts() },     // "Ver todos" -> lista de productos (grid)
+                    onProductClick = { id: Long ->
+                        navController.navigate(Route.ProductDetail.createRoute(id))
+                    }
                 )
             }
 
-            // LISTA DE PRODUCTOS
+            // LISTA DE PRODUCTOS COMO GRID
             composable(Route.ProductList.path) {
-                ProductListScreen(
+                ProductGridScreen(
                     productViewModel = productViewModel,
-                    onProductClick = { productId ->
+                    onProductClick = { productId: Long ->
                         navController.navigate(Route.ProductDetail.createRoute(productId))
                     }
                 )
@@ -130,7 +169,8 @@ fun AppNavGraph(
                 val productId = backStackEntry.arguments?.getLong("productId") ?: 0L
                 ProductDetailScreen(
                     productId = productId,
-                    productViewModel = productViewModel
+                    productViewModel = productViewModel,
+                    onBack = { navController.popBackStack() }
                 )
             }
 
