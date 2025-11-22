@@ -34,10 +34,10 @@ fun AppNavBar(
             onClick = { onHome() }
         )
 
-        //CATEGORÍAS
+        //Productos
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Category, contentDescription = "Categorías") },
-            label = { Text("Categorías") },
+            icon = { Icon(Icons.Default.Category, contentDescription = "Productos") },
+            label = { Text("Productos") },
             selected = false,
             onClick = { onCategories() }
         )
