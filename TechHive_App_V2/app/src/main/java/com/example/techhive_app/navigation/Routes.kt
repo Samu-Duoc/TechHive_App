@@ -1,6 +1,8 @@
     package com.example.techhive_app.navigation
 
     sealed class Route(val path: String) {
+
+        data object Splash   : Route("splash")
         data object Inicio   : Route("inicio")
         data object Home     : Route("home")
         data object Login    : Route("login")
