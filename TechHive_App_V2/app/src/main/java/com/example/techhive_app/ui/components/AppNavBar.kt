@@ -55,10 +55,10 @@ fun AppNavBar(
             icon = {
                 Icon(
                     if (isLoggedIn) Icons.Default.Person else Icons.Default.Login,
-                    contentDescription = if (isLoggedIn) "Perfil" else "Iniciar sesión"
+                    contentDescription = if (isLoggedIn) "Cuenta" else "Iniciar sesión"
                 )
             },
-            label = { Text(if (isLoggedIn) "Perfil" else "Login") },
+            label = { Text(if (isLoggedIn) "Cuenta" else "Iniciar Sesión") },
             selected = false,
             onClick = {
                 if (isLoggedIn) {
