@@ -9,26 +9,48 @@ data class CartItem(val product: ProductEntity, val quantity: Int)
 
 // Objeto singleton que gestiona el estado del carrito de compras.
 object Cart {
-    // _items es un flujo mutable privado que contiene la lista de ítems del carrito
+
     private val _items = MutableStateFlow<List<CartItem>>(emptyList())
-    // items expone el estado del carrito como un flujo inmutable de solo lectura
     val items: StateFlow<List<CartItem>> = _items
 
-    // Añade un producto al carrito o incrementa su cantidad si ya existe
-    fun addItem(product: ProductEntity) {
-        val currentItems = _items.value.toMutableList()
-        val existingItem = currentItems.find { it.product.id == product.id }
+    /**
+     * Añade un producto al carrito.
+     * @param quantity cuántas unidades quieres sumar (por defecto 1)
+     */
+    fun addItem(product: ProductEntity, quantity: Int = 1) {
+        if (quantity <= 0) return
 
-        if (existingItem != null) {
-            // Si el producto ya está en el carrito, incrementa la cantidad
-            val updatedItem = existingItem.copy(quantity = existingItem.quantity + 1)
-            val index = currentItems.indexOf(existingItem)
-            currentItems[index] = updatedItem
+        val currentItems = _items.value.toMutableList()
+        val index = currentItems.indexOfFirst { it.product.id == product.id }
+
+        if (index >= 0) {
+            val existing = currentItems[index]
+            val newQty = existing.quantity + quantity
+            currentItems[index] = existing.copy(quantity = newQty)
         } else {
-            // Si es un producto nuevo, lo añade al carrito con cantidad 1
-            currentItems.add(CartItem(product = product, quantity = 1))
+            currentItems.add(CartItem(product = product, quantity = quantity))
         }
+
         _items.value = currentItems
+    }
+
+    /**
+     * Actualiza la cantidad de un producto.
+     * Si newQuantity <= 0, se elimina del carrito.
+     */
+    fun updateQuantity(productId: Long, newQuantity: Int) {
+        val currentItems = _items.value.toMutableList()
+        val index = currentItems.indexOfFirst { it.product.id == productId }
+
+        if (index >= 0) {
+            if (newQuantity <= 0) {
+                currentItems.removeAt(index)
+            } else {
+                val existing = currentItems[index]
+                currentItems[index] = existing.copy(quantity = newQuantity)
+            }
+            _items.value = currentItems
+        }
     }
 
     // Elimina un producto del carrito
