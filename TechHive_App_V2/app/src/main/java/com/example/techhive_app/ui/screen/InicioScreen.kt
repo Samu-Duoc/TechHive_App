@@ -50,7 +50,7 @@ fun InicioScreen(
         Category("Accesorios", Icons.Default.Watch),
         Category("Componentes", Icons.Default.Memory),
         Category("Consolas", Icons.Default.Gamepad),
-        Category("Reacondicionados", Icons.Default.Build)
+        Category("Periféricos", Icons.Default.Mouse)
     )
 
     // 4–6 productos para mostrar en el inicio como “promos”
