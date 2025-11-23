@@ -15,12 +15,12 @@ import com.example.techhive_app.navigation.AppNavGraph
 import com.example.techhive_app.data.local.database.AppDatabase
 import com.example.techhive_app.data.repository.ProductRepository
 import com.example.techhive_app.data.repository.UserRepository
+import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
 import com.example.techhive_app.ui.viewmodel.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.AuthViewModelFactory
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModelFactory
 import com.example.techhive_app.ui.theme.TechHive_AppTheme
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,20 +32,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun AppRoot() {
     val context = LocalContext.current.applicationContext
     val db = AppDatabase.getInstance(context)
 
-    // Dependencias de autenticación
+    // ---------- AUTH ----------
     val userDao = db.userDao()
-    val userRepository = UserRepository(userDao)
+    val authApi = RemoteModule.authApi
+    val userRepository = UserRepository(userDao, authApi)
+
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(userRepository)
     )
 
-    // Creamos las dependencias para los productos
+    // ---------- PRODUCTOS ----------
     val productDao = db.productDao()
     val productRepository = ProductRepository(productDao)
     val productViewModel: ProductViewModel = viewModel(
@@ -53,9 +54,9 @@ fun AppRoot() {
     )
 
     val navController = rememberNavController()
-    TechHive_AppTheme  {
+
+    TechHive_AppTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            // Pasamos el ProductViewModel al NavGraph
             AppNavGraph(
                 navController = navController,
                 authViewModel = authViewModel,

@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.screen
+package com.example.techhive_app.ui.screen.common
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -16,7 +17,8 @@ fun ProfileMenuScreen(
     onEditProfile: () -> Unit,
     onAddress: () -> Unit,
     onHistory: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    historyLabel: String = "Historial de compras"
 ) {
     Scaffold(
         topBar = {
@@ -47,7 +49,7 @@ fun ProfileMenuScreen(
 
             ProfileMenuItem(
                 icon = Icons.Default.History,
-                label = "Historial de compras",
+                label = historyLabel,
                 onClick = onHistory
             )
 
@@ -62,7 +64,7 @@ fun ProfileMenuScreen(
 
 @Composable
 fun ProfileMenuItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
     onClick: () -> Unit
 ) {

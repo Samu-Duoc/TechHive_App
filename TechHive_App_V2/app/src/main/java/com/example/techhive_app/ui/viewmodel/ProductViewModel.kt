@@ -63,4 +63,21 @@ class ProductViewModel(private val repository: ProductRepository) : ViewModel() 
                 }
         }
     }
+
+    //Insertar Productos
+    fun insertProduct(product: ProductEntity) {
+        viewModelScope.launch {
+            repository.insertProduct(product)
+            // Opcional: recargar lista (aunque tu Flow ya lo hace solo si vienes del DAO)
+            // loadProducts()
+        }
+    }
+
+    // Eliminar por ID
+    fun deleteProduct(productId: Long) {
+        viewModelScope.launch {
+            repository.deleteProductById(productId)
+            // Opcional: loadProducts()
+        }
+    }
 }

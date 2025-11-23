@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.screen
+package com.example.techhive_app.ui.screen.client
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.example.techhive_app.data.local.order.OrderManager
 import com.example.techhive_app.ui.util.formatPrice
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class) //ES PARA QUE FUNCIONE EL TOPBAR
 @Composable

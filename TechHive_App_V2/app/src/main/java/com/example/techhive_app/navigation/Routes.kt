@@ -2,11 +2,16 @@
 
     sealed class Route(val path: String) {
 
+        //Rutas generales
         data object Splash   : Route("splash") //Pantalla de carga
-        data object Inicio   : Route("inicio") // Inicio de app, con categorías y productos destacados
         data object Home     : Route("home")  //Pantalla pública sin sesión
         data object Login    : Route("login")  //Pantalla de Iniciar Sesión
         data object Register : Route("register")  //Pantalla de Registro
+
+
+        //Rutas del Cliente en la app
+        data object Inicio   : Route("inicio") // Inicio de app, con categorías y productos destacados
+
         data object ProductList : Route("products")  //Productos
         data object Cart : Route("cart")  // Carrito
         data object Profile : Route("profile") // Perfil
@@ -14,8 +19,6 @@
         data object ProfileMenu : Route("profile_menu") // TopBar de Cuenta
 
         data object Address : Route("address") // navegación a dirección
-
-
 
         //productos en detalle (visulización de un producto)
         data object ProductDetail : Route("products/{productId}") {
@@ -30,6 +33,19 @@
         //Historial de compras
         data object OrderHistory : Route("order_history")
 
+
+        //Rutas del Admin en la app
+        data object AdminProducts : Route("admin_products")
+        data object AdminAddProduct : Route("admin_add_product")
+        data object AdminEditProduct : Route("admin_edit_product/{productId}") {
+            fun createRoute(productId: Long) = "admin_edit_product/$productId"
+        }
+
+        //Nuevas rutas para mostrar el admin
+        data object SplashDecision : Route("splash_decision/{email}") {
+            fun createRoute(email: String) = "splash_decision/$email"
+        }
+        object AdminHome : Route("admin_home")       // ← entrada al NavGraph del admin          // ← Ya existe, pero la renombramos lógicamente
 
 
     }

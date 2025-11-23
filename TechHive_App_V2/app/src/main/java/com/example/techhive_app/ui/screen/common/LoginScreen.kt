@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.screen
+package com.example.techhive_app.ui.screen.common
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions

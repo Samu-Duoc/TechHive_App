@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.screen
+package com.example.techhive_app.ui.screen.client
 
 import android.widget.Toast
 import androidx.compose.foundation.Image

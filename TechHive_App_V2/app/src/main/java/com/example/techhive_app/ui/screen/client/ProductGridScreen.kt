@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.screen
+package com.example.techhive_app.ui.screen.client
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
