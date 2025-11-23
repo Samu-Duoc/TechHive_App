@@ -8,7 +8,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RemoteModule {
 
-    // Emulador Android hablando con tu PC (localhost:8081)
+    //PARA EMULADOR ANDROID: Si el backend corre en emulador usar: "http://10.0.2.2:8081/"
+
+    // Emulador Android hablando con tu PC y dispositivo (localhost:8081)
     private const val BASE_URL = "http://192.168.1.96:8081/"
 
     private val logging = HttpLoggingInterceptor().apply {

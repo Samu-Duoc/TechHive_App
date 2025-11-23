@@ -5,6 +5,7 @@ import com.example.techhive_app.data.remote.dto.LoginResponseDto
 import com.example.techhive_app.data.remote.dto.RegisterRequestDto
 import retrofit2.http.Body
 import retrofit2.http.POST
+import  retrofit2.http.GET
 
 interface AuthApi {
 
@@ -17,4 +18,7 @@ interface AuthApi {
     suspend fun register(
         @Body body: RegisterRequestDto
     ): LoginResponseDto
+
+    @GET("auth/usuarios")
+    suspend fun getAllUsers(): List<LoginResponseDto>
 }

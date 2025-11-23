@@ -41,11 +41,15 @@
             fun createRoute(productId: Long) = "admin_edit_product/$productId"
         }
 
+        data object AdminOrders : Route("admin_orders")
+
+        data object AdminUsers  : Route("admin_users")
+
         //Nuevas rutas para mostrar el admin
         data object SplashDecision : Route("splash_decision/{email}") {
             fun createRoute(email: String) = "splash_decision/$email"
         }
-        object AdminHome : Route("admin_home")       // ← entrada al NavGraph del admin          // ← Ya existe, pero la renombramos lógicamente
+        object AdminHome : Route("admin_home")  // entrada al NavGraph del admin
 
 
     }

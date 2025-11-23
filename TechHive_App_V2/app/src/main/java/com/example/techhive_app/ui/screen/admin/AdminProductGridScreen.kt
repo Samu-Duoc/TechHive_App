@@ -28,7 +28,11 @@ fun AdminProductGridScreen(
     onEditProduct: (Long) -> Unit
 ) {
     val uiState by productViewModel.uiState.collectAsState()
-    val products = uiState.products   //aquí SIN distinctBy, el admin ve todos
+    val products = uiState.products
+
+    //Para el panel admin, igual que en cliente: solo una carátula por SKU
+    val productsForGrid = products.distinctBy { it.sku }
+
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -37,7 +41,7 @@ fun AdminProductGridScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(products) { product ->
+        items(productsForGrid) { product ->
             AdminProductCard(
                 product = product,
                 onEdit = { onEditProduct(product.id) },

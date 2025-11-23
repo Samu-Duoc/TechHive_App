@@ -46,7 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 val productdao = getInstance(context).productDao()
 
                                 val userSeed = listOf(
-                                    UserEntity(name = "Admin", email = "admin@duoc.cl", phone = "+56911111111", password = "Admin123!"),
+                                    UserEntity(name = "Admin", email = "admin@techive.cl", phone = "+56911111111", password = "Admin123!"),
                                     UserEntity(name = "Samuel Fuenzalida", email = "Samu@duoc.cl", phone = "+56922222222", password = "123456")
                                 )
                                 if (userdao.count() == 0) {

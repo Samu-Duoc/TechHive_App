@@ -18,5 +18,7 @@ class AuthRemoteRepository(
         return api.register(dto)
     }
 
-
+    suspend fun getAllUsers(): List<LoginResponseDto> {
+        return api.getAllUsers()
+    }
 }

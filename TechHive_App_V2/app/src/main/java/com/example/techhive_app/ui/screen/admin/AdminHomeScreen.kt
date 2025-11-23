@@ -1,14 +1,25 @@
 package com.example.techhive_app.ui.screen.admin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,191 +29,254 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
-// Modelo de opción del admin
-data class AdminOption(
-    val title: String,
-    val icon: ImageVector,
-    val onClick: () -> Unit
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
+// Home de Admin con acciones rápidas
 @Composable
 fun AdminHomeScreen(
     onNavigateToProducts: () -> Unit,
     onNavigateToUsers: () -> Unit,
     onNavigateToOrders: () -> Unit,
-    onNavigateToReports: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onAddProduct: () -> Unit
 ) {
-    Column(
+    Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF0F2F5))
-            .padding(vertical = 8.dp)
-    ) {
-        // Título grande de bienvenida
-        Text(
-            text = "Panel de Administrador",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.padding(16.dp)
-        )
-
-        // Banner promocional igual que el cliente (opcional, lo puedes quitar si quieres)
-        AdminPromotionalBanner()
-
-        // Tarjetas grandes de opciones (estilo moderno)
-        AdminQuickActions(
-            onNavigateToProducts = onNavigateToProducts,
-            onNavigateToUsers = onNavigateToUsers,
-            onNavigateToOrders = onNavigateToOrders,
-            onNavigateToReports = onNavigateToReports
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Estadísticas rápidas (puedes conectar después con tu ViewModel)
-        QuickStatsSection()
-    }
-}
-
-@Composable
-fun AdminPromotionalBanner() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.AdminPanelSettings,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(56.dp)
-            )
-            Spacer(modifier = Modifier.width(20.dp))
-            Column {
-                Text(
-                    "Bienvenido, Administrador",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "Gestiona tu tienda desde aquí",
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 16.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AdminQuickActions(
-    onNavigateToProducts: () -> Unit,
-    onNavigateToUsers: () -> Unit,
-    onNavigateToOrders: () -> Unit,
-    onNavigateToReports: () -> Unit
-) {
-    val options = listOf(
-        AdminOption("Productos", Icons.Default.Inventory2) { onNavigateToProducts() },
-        AdminOption("Usuarios", Icons.Default.People) { onNavigateToUsers() },
-        AdminOption("Pedidos", Icons.Default.ReceiptLong) { onNavigateToOrders() },
-        AdminOption("Reportes", Icons.Default.BarChart) { onNavigateToReports() }
-    )
-
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = "Acciones rápidas",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(vertical = 12.dp)
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(options) { option ->
-                AdminActionCard(option = option)
-            }
-        }
-    }
-}
-
-@Composable
-fun AdminActionCard(option: AdminOption) {
-    Card(
-        onClick = option.onClick,
-        modifier = Modifier
-            .width(160.dp)
-            .height(140.dp),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                modifier = Modifier.size(64.dp)
-            ) {
-                Icon(
-                    imageVector = option.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(8.dp)
-                )
-            }
+            // --------- CABECERA ADMIN ---------
+            AdminHeaderCard()
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --------- ACCIONES RÁPIDAS ---------
+            Text(
+                text = "Acciones rápidas",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Grid 2x2 de acciones rápidas
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    QuickActionCard(
+                        title = "Inventario",
+                        description = "Ver y editar productos",
+                        icon = Icons.Default.Inventory2,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToProducts
+                    )
+                    QuickActionCard(
+                        title = "Pedidos",
+                        description = "Órdenes y estados",
+                        icon = Icons.Default.ListAlt,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToOrders
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    QuickActionCard(
+                        title = "Clientes",
+                        description = "Usuarios registrados",
+                        icon = Icons.Default.Group,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToUsers
+                    )
+                    QuickActionCard(
+                        title = "Cuenta",
+                        description = "Perfil de administrador",
+                        icon = Icons.Default.Person,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToProfile
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --------- AGREGAR PRODUCTO DESTACADO ---------
             Text(
-                text = option.title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
+                text = "Gestión de productos",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            AddProductCard(onAddProduct = onAddProduct)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --------- ESTADÍSTICAS RÁPIDAS (placeholder) ---------
+            Text(
+                text = "Resumen rápido",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val stats = listOf(
+                AdminStat("Productos", "120"),
+                AdminStat("Pedidos hoy", "8"),
+                AdminStat("Clientes", "56"),
+                AdminStat("Pendientes", "3")
+            )
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(stats) { stat ->
+                    StatCard(title = stat.title, value = stat.value)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun QuickStatsSection() {
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = "Resumen rápido",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StatCard(title = "Ventas hoy", value = "$12,450", icon = Icons.Default.AttachMoney)
-            StatCard(title = "Pedidos", value = "48", icon = Icons.Default.ShoppingCart)
-            StatCard(title = "Productos", value = "156", icon = Icons.Default.Inventory)
-        }
-    }
-}
-
-@Composable
-fun StatCard(title: String, value: String, icon: ImageVector) {
+private fun AdminHeaderCard() {
     Card(
-        modifier = Modifier.width(160.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(64.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.15f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.AdminPanelSettings,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = "Panel administrador",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Gestiona productos, pedidos y clientes",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(96.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(description, fontSize = 12.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddProductCard(onAddProduct: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .clickable { onAddProduct() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text("Agregar producto", fontWeight = FontWeight.Bold)
+                Text(
+                    "Crear un nuevo producto en el catálogo",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+    }
+}
+
+private data class AdminStat(val title: String, val value: String)
+
+@Composable
+private fun StatCard(title: String, value: String) {
+    Card(
+        modifier = Modifier.width(140.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -210,8 +284,6 @@ fun StatCard(title: String, value: String, icon: ImageVector) {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
             Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text(title, fontSize = 12.sp, color = Color.Gray)
         }
