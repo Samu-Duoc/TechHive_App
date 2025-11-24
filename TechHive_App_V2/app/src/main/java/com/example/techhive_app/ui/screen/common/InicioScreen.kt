@@ -84,6 +84,13 @@ fun InicioScreen(
                 onProductClick = onProductClick
             )
         }
+        else if (uiState.error != null) {
+            Text(
+                text = "Error al cargar productos: ${uiState.error}",
+                color = Color.Red,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
     }
 }
 

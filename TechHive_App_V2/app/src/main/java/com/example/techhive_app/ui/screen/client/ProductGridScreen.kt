@@ -18,6 +18,7 @@ import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.layout.FlowRow   // 👈 IMPORTANTE
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ProductGridScreen(
@@ -63,6 +64,14 @@ fun ProductGridScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
         }
+
+        if (uiState.error != null) {
+            Text(
+                text = "Error al cargar productos: ${uiState.error}",
+                color = Color.Red
+            )
+        }
+
 
         // ---- GRID DE PRODUCTOS ----
         LazyVerticalGrid(
