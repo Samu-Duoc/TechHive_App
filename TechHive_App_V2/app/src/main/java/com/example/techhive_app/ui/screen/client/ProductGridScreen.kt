@@ -17,9 +17,12 @@ import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.material3.FilterChip
-import androidx.compose.foundation.layout.FlowRow   // 👈 IMPORTANTE
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
+
+@OptIn (ExperimentalMaterial3Api::class)
 @Composable
 fun ProductGridScreen(
     productViewModel: ProductViewModel,
@@ -90,6 +93,7 @@ fun ProductGridScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CategoryFilterRow(
     categories: List<String>,
