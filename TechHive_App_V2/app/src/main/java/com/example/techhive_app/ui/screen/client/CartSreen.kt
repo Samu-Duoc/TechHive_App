@@ -110,7 +110,7 @@ fun CartScreen(
                         ).show()
 
                         // 2) Llamar al microservicio Pedidos+Pagos en segundo plano
-                        //Recordar el pedido funciona pero arroga error cuando paga, pero si sube el pedido a la base de datos. 
+                        //Recordar el pedido funciona pero arroga error cuando paga, pero si sube el pedido a la base de datos.
                         scope.launch {
                             try {
                                 val dto = CrearPedidoPagoDTO(
