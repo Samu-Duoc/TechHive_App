@@ -22,12 +22,13 @@ object OrderManager {
         val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
         val dateString = formatter.format(Date())
 
-        val order = Order (
+        val order = Order(
             id = newId,
             date = dateString,
             total = total,
             items = items.toList()
         )
+
         _orders.value = _orders.value + order
 
         Cart.clearCart()
@@ -35,6 +36,6 @@ object OrderManager {
         return newId
     }
 
-    fun getOrderById(id:Long): Order? =
+    fun getOrderById(id: Long): Order? =
         _orders.value.find { it.id == id }
 }

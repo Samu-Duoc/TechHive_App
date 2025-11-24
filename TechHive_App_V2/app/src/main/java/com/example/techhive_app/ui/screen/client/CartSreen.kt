@@ -97,6 +97,7 @@ fun CartScreen(
                 ) {
                     Text("Finalizar compra")
                 }
+
             }
         }
     }

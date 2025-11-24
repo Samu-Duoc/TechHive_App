@@ -42,8 +42,10 @@ import com.example.techhive_app.ui.screen.common.SplashDecisionScreen
 import com.example.techhive_app.ui.screen.admin.AdminHomeScreen
 import com.example.techhive_app.ui.screen.admin.AdminProductGridScreen
 import com.example.techhive_app.ui.screen.admin.ProductFormScreen
+import com.example.techhive_app.ui.screen.client.ContactFormScreen
 import com.example.techhive_app.ui.viewmodel.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
+
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -216,6 +218,9 @@ fun AppNavGraph(
                         onViewAllProducts = { goProducts() },
                         onProductClick = { id: Long ->
                             navController.navigate(Route.ProductDetail.createRoute(id))
+                        },
+                        onContactClick = {
+                            navController.navigate(Route.Contact.path)
                         }
                     )
                 }
@@ -312,6 +317,13 @@ fun AppNavGraph(
             // ---------- DIRECCIÓN ----------
             composable(Route.Address.path) {
                 AddressScreen(onBack = { navController.popBackStack() })
+            }
+
+            // ---------- CONTACTO ----------
+            composable(Route.Contact.path) {
+                ContactFormScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             // ---------- PERFIL ----------

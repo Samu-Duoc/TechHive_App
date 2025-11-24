@@ -28,6 +28,8 @@ import com.example.techhive_app.R
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import androidx.compose.foundation.clickable
+
 
 // Modelo de las categorías
 data class Category(val name: String, val icon: ImageVector)
@@ -38,7 +40,8 @@ fun InicioScreen(
     productViewModel: ProductViewModel,
     onCategoryClick: (String) -> Unit,
     onViewAllProducts: () -> Unit,
-    onProductClick: (Long) -> Unit
+    onProductClick: (Long) -> Unit,
+    onContactClick: () -> Unit
 ) {
 
     val uiState by productViewModel.uiState.collectAsState()
@@ -54,7 +57,6 @@ fun InicioScreen(
         Category("Periféricos", Icons.Default.Mouse)
     )
 
-    // 4–6 productos para mostrar en el inicio como “promos”
     val destacados: List<ProductEntity> = uiState.products.take(6)
 
     Column(
@@ -67,32 +69,43 @@ fun InicioScreen(
         PromotionalBanner()
         CategoriesCarousel(categories = categories, onCategoryClick = onCategoryClick)
 
-        // Sección de productos destacados / flash sale
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+        // ---- Sección de destacados ----
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        } else if (destacados.isNotEmpty()) {
-            FlashSaleSection(
-                products = destacados,
-                onViewAll = onViewAllProducts,
-                onProductClick = onProductClick
-            )
-        }
-        else if (uiState.error != null) {
-            Text(
-                text = "Error al cargar productos: ${uiState.error}",
-                color = Color.Red,
-                modifier = Modifier.padding(16.dp)
-            )
+
+            uiState.error != null -> {
+                Text(
+                    text = "Error al cargar productos: ${uiState.error}",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            destacados.isNotEmpty() -> {
+                FlashSaleSection(
+                    products = destacados,
+                    onViewAll = onViewAllProducts,
+                    onProductClick = onProductClick
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                // --- Contact Card debajo de destacados ---
+                ContactCard(onClick = onContactClick)
+            }
         }
     }
 }
+
 
 
 // BARRA DE BÚSQUEDA
@@ -271,8 +284,34 @@ fun FlashSaleSection(
                 )
             }
         }
+
+        Spacer(Modifier.height(20.dp))
+
     }
 }
+
+@Composable
+fun ContactCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                "¿Deseas cotizar o conocer el estado de tu pedido?",
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("Contáctanos y te responderemos lo antes posible.")
+        }
+    }
+}
+
 
 @Composable
 fun FlashProductCard(

@@ -58,6 +58,8 @@
             fun createRoute(category: String) = "products_by_category/$category"
         }
 
+        //CONTACTO
+        data object Contact : Route("contact")
 
 
     }
