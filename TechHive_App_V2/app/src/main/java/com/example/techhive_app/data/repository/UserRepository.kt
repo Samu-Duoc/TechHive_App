@@ -2,87 +2,72 @@ package com.example.techhive_app.data.repository
 
 import com.example.techhive_app.data.local.user.UserDao
 import com.example.techhive_app.data.local.user.UserEntity
-import com.example.techhive_app.data.remote.dto.LoginRequestDto
-import com.example.techhive_app.data.remote.dto.RegisterRequestDto
+import com.example.techhive_app.data.remote.dto.auth.LoginRequestDto
+import com.example.techhive_app.data.remote.dto.auth.LoginResponseDto
+import com.example.techhive_app.data.remote.dto.auth.RegisterRequestDto
 import com.example.techhive_app.data.remote.retrofit.AuthApi
+
+data class UserProfile(
+    val fullName: String,
+    val email: String,
+    val rut: String,
+    val direccion: String,
+    val telefono: String,
+    val isAdmin: Boolean
+)
 
 class UserRepository(
     private val userDao: UserDao,
     private val authApi: AuthApi
 ) {
 
-    // ---------------- LOGIN contra el microservicio ----------------
-    suspend fun login(email: String, password: String): Result<UserEntity> {
+    // LOGIN  (AuthApi)
+    suspend fun login(email: String, password: String): Result<LoginResponseDto> {
         return try {
-            // 1) Llamar al MS
-            val body = LoginRequestDto(email = email, password = password)
-            val remote = authApi.login(body)
-
-            // 2) Mapear al UserEntity local (Room)
-            val localUser = UserEntity(
-                name = "${remote.nombre} ${remote.apellido}",
-                email = remote.email,
-                phone = remote.telefono,
-                password = password // si no quieres guardarla, la quitamos luego
-            )
-
-            // 3) Guardar en Room (por si quieres usar el perfil local)
-            userDao.insert(localUser)
-
-            Result.success(localUser)
+            val response = authApi.login(LoginRequestDto(email, password))
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // ---------------- REGISTRO contra el microservicio ----------------
-    suspend fun register(
-        name: String,
-        email: String,
-        phone: String,
-        password: String
-    ): Result<Long> {
+    // REGISTRO (AuthApi)
+    suspend fun register(dto: RegisterRequestDto): Result<LoginResponseDto> {
         return try {
-            // separar nombre y apellido a partir de "Nombre Apellido"
-            val parts = name.trim().split(" ", limit = 2)
-            val nombre = parts.getOrNull(0) ?: ""
-            val apellido = parts.getOrNull(1) ?: ""
+            val response = authApi.register(dto)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-            val body = RegisterRequestDto(
-                nombre = nombre,
-                apellido = apellido,
-                rut = "111111111",          // fijo por ahora (tu MS lo exige)
-                email = email,
-                password = password,
-                telefono = phone,
-                direccion = "Av.Funciona xfis"  // fijo por ahora
-            )
+    // GUARDAR USUARIO EN LOCAL (si lo sigues usando)
+    suspend fun saveLocalUser(entity: UserEntity) {
+        userDao.insert(entity)
+    }
 
-            val remote = authApi.register(body)
+    // PERFIL DESDE MICROSERVICIO
+    suspend fun getUserProfileFromMs(email: String): Result<UserProfile> {
+        return try {
+            val users = authApi.getAllUsers()
+            val user = users.firstOrNull { it.email == email }
 
-            // Guardar también en Room
-            val id = userDao.insert(
-                UserEntity(
-                    name = "$nombre $apellido",
-                    email = remote.email,
-                    phone = phone,
-                    password = password
+
+            if (user != null) {
+                val profile = UserProfile(
+                    fullName = "${user.nombre} ${user.apellido}",
+                    email = user.email,
+                    rut = user.rut,
+                    direccion = user.direccion,
+                    telefono = user.telefono,
+                    isAdmin = user.rol == "ADMIN"
                 )
-            )
-
-            Result.success(id)
+                Result.success(profile)
+            } else {
+                Result.failure(Exception("Usuario no encontrado en MS"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-
-    // ---------------- PERFIL desde la BD local ----------------
-    suspend fun getUserByEmail(email: String): Result<UserEntity> {
-        val user = userDao.getByEmail(email)
-        return if (user != null) {
-            Result.success(user)
-        } else {
-            Result.failure(NoSuchElementException("Usuario no encontrado con ese email"))
         }
     }
 }

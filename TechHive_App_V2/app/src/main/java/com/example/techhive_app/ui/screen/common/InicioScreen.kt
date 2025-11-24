@@ -42,11 +42,12 @@ fun InicioScreen(
 ) {
 
     val uiState by productViewModel.uiState.collectAsState()
+
     val categories = listOf(
         Category("Smartphones", Icons.Default.Smartphone),
         Category("Audio", Icons.Default.Headphones),
-        Category("PC", Icons.Default.DesktopWindows),
-        Category("Laptops", Icons.Default.Laptop),
+        Category("Computadores", Icons.Default.DesktopWindows),
+        Category("Reacondicionados", Icons.Default.Laptop),
         Category("Accesorios", Icons.Default.Watch),
         Category("Componentes", Icons.Default.Memory),
         Category("Consolas", Icons.Default.Gamepad),

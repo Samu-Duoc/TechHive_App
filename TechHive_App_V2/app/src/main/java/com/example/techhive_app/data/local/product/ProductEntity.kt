@@ -12,7 +12,10 @@ data class ProductEntity(
     val name: String,
     val description: String,
     val price: Double,
+
+    // IMPORTANTE: drawable local, NO String, NO imageRes extra
     @DrawableRes val imageUrl: Int,
+
     val stock: Int,
     val sku: String,
     val category: String

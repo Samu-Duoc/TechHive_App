@@ -1,4 +1,4 @@
-package com.example.techhive_app.data.remote.dto
+package com.example.techhive_app.data.remote.dto.auth
 
 data class LoginRequestDto(
     val email: String,

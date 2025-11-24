@@ -33,14 +33,15 @@
 
         <!-- tu FileProvider de la cámara acá -->
         <provider
-            android:grantUriPermissions="true"
-            android:exported="false"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
-            android:name="androidx.core.content.FileProvider" >
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
 
     </application>
 

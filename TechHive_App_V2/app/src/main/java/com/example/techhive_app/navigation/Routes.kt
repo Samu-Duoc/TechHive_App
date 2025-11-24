@@ -11,8 +11,6 @@
 
         //Rutas del Cliente en la app
         data object Inicio   : Route("inicio") // Inicio de app, con categorías y productos destacados
-
-        data object ProductList : Route("products")  //Productos
         data object Cart : Route("cart")  // Carrito
         data object Profile : Route("profile") // Perfil
 
@@ -50,6 +48,16 @@
             fun createRoute(email: String) = "splash_decision/$email"
         }
         object AdminHome : Route("admin_home")  // entrada al NavGraph del admin
+
+
+        // LISTA GENERAL
+        data object ProductList : Route("products")
+
+        // LISTA FILTRADA POR CATEGORÍA
+        data object ProductListByCategory : Route("products_by_category/{category}") {
+            fun createRoute(category: String) = "products_by_category/$category"
+        }
+
 
 
     }

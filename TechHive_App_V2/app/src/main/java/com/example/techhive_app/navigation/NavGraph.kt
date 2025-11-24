@@ -103,10 +103,8 @@ fun AppNavGraph(
         Route.AdminEditProduct.path
     )
 
-    //si es admin, NUNCA mostramos la barra del cliente
+    // si es admin, NUNCA mostramos la barra del cliente
     val showClientBar = !isAdminUser && currentRoute !in hideClientBarRoutes
-
-
 
     Scaffold(
         bottomBar = {
@@ -186,7 +184,7 @@ fun AppNavGraph(
                 )
             }
 
-            // ---------- SPLASH DECISION (elige admin/cliente después de login) ----------
+            // ---------- SPLASH DECISION ----------
             composable(
                 route = Route.SplashDecision.path,
                 arguments = listOf(navArgument("email") { type = NavType.StringType })
@@ -210,13 +208,42 @@ fun AppNavGraph(
                 } else {
                     InicioScreen(
                         productViewModel = productViewModel,
-                        onCategoryClick = { _ -> goProducts() },
+                        onCategoryClick = { categoryName ->
+                            navController.navigate(
+                                Route.ProductListByCategory.createRoute(categoryName)
+                            )
+                        },
                         onViewAllProducts = { goProducts() },
                         onProductClick = { id: Long ->
                             navController.navigate(Route.ProductDetail.createRoute(id))
                         }
                     )
                 }
+            }
+
+            // ---------- LISTA DE PRODUCTOS (GRID GENERAL) ----------
+            composable(Route.ProductList.path) {
+                ProductGridScreen(
+                    productViewModel = productViewModel,
+                    onProductClick = { productId: Long ->
+                        navController.navigate(Route.ProductDetail.createRoute(productId))
+                    }
+                )
+            }
+
+            // ---------- LISTA DE PRODUCTOS POR CATEGORÍA ----------
+            composable(
+                route = Route.ProductListByCategory.path,
+                arguments = listOf(navArgument("category") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category")
+                ProductGridScreen(
+                    productViewModel = productViewModel,
+                    onProductClick = { productId: Long ->
+                        navController.navigate(Route.ProductDetail.createRoute(productId))
+                    },
+                    initialCategory = category
+                )
             }
 
             // ---------- DETALLE PRODUCTO ----------
@@ -272,7 +299,7 @@ fun AppNavGraph(
                 )
             }
 
-            // ---------- MENÚ PERFIL (CLIENTE o ADMIN) ----------
+            // ---------- MENÚ PERFIL ----------
             composable(Route.ProfileMenu.path) {
                 ProfileMenuScreen(
                     onEditProfile = { navController.navigate(Route.Profile.path) },
@@ -297,7 +324,7 @@ fun AppNavGraph(
 
             // =============== RUTAS ADMIN =================
 
-            // PANEL ADMIN (cards bonitas)
+            // PANEL ADMIN
             composable(Route.AdminHome.path) {
                 AdminHomeScreen(
                     onNavigateToProducts = {
@@ -352,7 +379,6 @@ fun AppNavGraph(
 
             // LISTADO DE PEDIDOS PARA ADMIN
             composable(Route.AdminOrders.path) {
-                // Por ahora puedes reusar tu OrderHistoryScreen
                 OrderHistoryScreen(
                     onBack = { navController.popBackStack() },
                     onOrderSelected = { id ->
@@ -361,7 +387,8 @@ fun AppNavGraph(
                 )
             }
 
-            composable(Route.AdminUsers.path){
+            // USUARIOS ADMIN (placeholder)
+            composable(Route.AdminUsers.path) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -376,7 +403,6 @@ fun AppNavGraph(
                     Text("Esta sección mostrará los clientes registrados desde el microservicio Auth.")
                 }
             }
-
         }
     }
 }

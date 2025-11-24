@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,27 +41,22 @@ private fun getImageUriFromFile(context: Context, file: File): Uri {
 }
 
 @Composable
-fun ProfileScreen(authViewModel: AuthViewModel, onLoggedOut: () -> Unit) {
+fun ProfileScreen(
+    authViewModel: AuthViewModel,
+    onLoggedOut: () -> Unit
+) {
     val context = LocalContext.current
     val userPrefs = remember { UserPreferences(context) }
 
     val userEmail by userPrefs.userEmail.collectAsStateWithLifecycle(initialValue = null)
     val photoUriString by userPrefs.userPhotoUri.collectAsStateWithLifecycle(initialValue = null)
 
+    val profileState by authViewModel.profile.collectAsStateWithLifecycle()
 
-
-    var userName by remember { mutableStateOf("") }
-    var userPhone by remember { mutableStateOf("") }
-
+    // Cargar datos del usuario desde el MS
     LaunchedEffect(userEmail) {
         if (!userEmail.isNullOrBlank()) {
-            authViewModel.getUserDetails(userEmail!!).onSuccess { user ->
-                userName = user.name ?: ""
-                userPhone = user.phone ?: ""
-            }.onFailure {
-                userName = ""
-                userPhone = ""
-            }
+            authViewModel.loadProfile(userEmail!!)
         }
     }
 
@@ -72,7 +66,7 @@ fun ProfileScreen(authViewModel: AuthViewModel, onLoggedOut: () -> Unit) {
     ) { success ->
         if (success) {
             pendingCaptureUri?.let { uri ->
-                authViewModel.savePhotoUri(userPrefs, uri.toString())
+                authViewModel.savePhotoUri(uri.toString())
                 Toast.makeText(context, "Foto de perfil actualizada", Toast.LENGTH_SHORT).show()
             }
         } else {
@@ -82,18 +76,26 @@ fun ProfileScreen(authViewModel: AuthViewModel, onLoggedOut: () -> Unit) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Mi Perfil", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(
+            "Mi Perfil",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Muestra la foto del usuario o un ícono de placeholder si no hay foto
+        // Foto de perfil o ícono placeholder
         if (photoUriString != null) {
             AsyncImage(
                 model = Uri.parse(photoUriString),
                 contentDescription = "Foto de perfil",
-                modifier = Modifier.size(150.dp).clip(CircleShape),
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
         } else {
@@ -104,30 +106,94 @@ fun ProfileScreen(authViewModel: AuthViewModel, onLoggedOut: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            val file = createTempImageFile(context)
-            val uri = getImageUriFromFile(context, file)
-            pendingCaptureUri = uri
-            takePictureLauncher.launch(uri)
-        }) {
+        Button(
+            onClick = {
+                val file = createTempImageFile(context)
+                val uri = getImageUriFromFile(context, file)
+                pendingCaptureUri = uri
+                takePictureLauncher.launch(uri)
+            }
+        ) {
             Text(if (photoUriString == null) "Añadir foto" else "Cambiar foto")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(value = userName, onValueChange = {}, readOnly = true, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+        if (profileState.isLoading) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+        }
+
+        profileState.error?.let { msg ->
+            Text(
+                text = msg,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+
+        OutlinedTextField(
+            value = profileState.name,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Nombre") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(value = userEmail ?: "", onValueChange = {}, readOnly = true, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
+
+        OutlinedTextField(
+            value = profileState.email.ifEmpty { userEmail ?: "" },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(value = userPhone, onValueChange = {}, readOnly = true, label = { Text("Teléfono") }, modifier = Modifier.fillMaxWidth())
+
+        OutlinedTextField(
+            value = profileState.rut,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("RUT") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = profileState.direccion,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Dirección") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = profileState.phone,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Teléfono") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = profileState.passwordMasked,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Contraseña") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = {
-                authViewModel.logout(userPrefs)
+                authViewModel.logout()
                 onLoggedOut()
                 Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
             },

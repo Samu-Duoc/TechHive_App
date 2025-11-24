@@ -10,16 +10,17 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-
 // Estado de la UI para la lista de productos
 data class ProductUiState(
     val products: List<ProductEntity> = emptyList(), // Lista de productos
-    val isLoading: Boolean = true, // Indicador de carga
-    val error: String? = null // Mensaje de error
+    val isLoading: Boolean = true,                  // Indicador de carga
+    val error: String? = null                       // Mensaje de error
 )
 
 // ViewModel para la pantalla de productos
-class ProductViewModel(private val repository: ProductRepository) : ViewModel() {
+class ProductViewModel(
+    private val repository: ProductRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductUiState())
     val uiState: StateFlow<ProductUiState> = _uiState
@@ -28,56 +29,75 @@ class ProductViewModel(private val repository: ProductRepository) : ViewModel() 
         loadProducts()
     }
 
-    // Carga todos los productos desde el repositorio
     private fun loadProducts() {
         viewModelScope.launch {
             repository.getAllProducts()
-                .onStart { _uiState.value = _uiState.value.copy(isLoading = true) } // Inicia carga
-                .catch { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) } // Maneja errores
+                .onStart {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true,
+                        error = null
+                    )
+                }
+                .catch { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
                 .collect { products ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, products = products) // Carga exitosa
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        products = products
+                    )
                 }
         }
     }
 
-    // Carga un producto específico por su ID
     fun loadProductById(productId: Long) {
         viewModelScope.launch {
             repository.getProductById(productId)
-                .onStart { _uiState.value = _uiState.value.copy(isLoading = true) }
-                .catch { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) }
+                .onStart {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true,
+                        error = null
+                    )
+                }
+                .catch { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
                 .collect { product ->
                     if (product != null) {
-                        // Si el producto ya está en la lista, lo actualizamos. Si no, lo añadimos
-                        val updatedProducts = _uiState.value.products.toMutableList()
-                        val index = updatedProducts.indexOfFirst { it.id == productId }
-                        if (index != -1) {
-                            updatedProducts[index] = product
-                        } else {
-                            updatedProducts.add(product)
-                        }
-                        _uiState.value = _uiState.value.copy(isLoading = false, products = updatedProducts)
+                        val updated = _uiState.value.products.toMutableList()
+                        val index = updated.indexOfFirst { it.id == productId }
+                        if (index != -1) updated[index] = product else updated.add(product)
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            products = updated
+                        )
                     } else {
-                        _uiState.value = _uiState.value.copy(isLoading = false, error = "Producto no encontrado")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = "Producto no encontrado"
+                        )
                     }
                 }
         }
     }
 
-    //Insertar Productos
     fun insertProduct(product: ProductEntity) {
         viewModelScope.launch {
             repository.insertProduct(product)
-            // Opcional: recargar lista (aunque tu Flow ya lo hace solo si vienes del DAO)
-            // loadProducts()
+            loadProducts()
         }
     }
 
-    // Eliminar por ID
     fun deleteProduct(productId: Long) {
         viewModelScope.launch {
             repository.deleteProductById(productId)
-            // Opcional: loadProducts()
+            loadProducts()
         }
     }
 }

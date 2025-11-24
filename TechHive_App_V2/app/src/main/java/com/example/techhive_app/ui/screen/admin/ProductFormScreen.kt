@@ -18,6 +18,8 @@ import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.example.techhive_app.data.remote.dto.product.ProductCategoryDto
+import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
 
 @OptIn(ExperimentalMaterial3Api::class) ////Para que agarre el TOPBAR
 @Composable
@@ -35,7 +37,48 @@ fun ProductFormScreen(
     var category by remember { mutableStateOf(productToEdit?.category ?: "") }
     var stock by remember { mutableStateOf(productToEdit?.stock?.toString() ?: "1") }
 
-    // manejamos la imagen de la galería (por ahora solo preview, no se guarda en BD)
+    val productApi = remember { RemoteModule.productApi }
+
+    var categories by remember { mutableStateOf<List<ProductCategoryDto>>(emptyList()) }
+    var isCategoryMenuExpanded by remember { mutableStateOf(false)}
+
+    LaunchedEffect(Unit) {
+        try {
+            categories = productApi.getCategorias()
+
+            //AL editar y si la categoría existe, la deja seleccionada
+            if (category.isBlank() && categories.isNotEmpty()) {
+                category = categories.first().nombre
+            }
+
+        }catch (_: Exception){
+
+            // si falla el ms, puedes dejar una lista fija de respaldo
+            categories = listOf(
+                ProductCategoryDto(0, "Smartphones"),
+                ProductCategoryDto(0, "Perifericos"),
+                ProductCategoryDto(0, "Periféricos"),
+                ProductCategoryDto(0, "Consolas"),
+                ProductCategoryDto(0, "Computadores"),
+                ProductCategoryDto(0, "Componentes"),
+                ProductCategoryDto(0, "Audio"),
+                ProductCategoryDto(0, "Accesorios"),
+            )
+
+            if (category.isBlank()){
+                category = categories.first().nombre
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+        // manejamos la imagen de la galería (por ahora solo preview, no se guarda en BD)
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -104,12 +147,45 @@ fun ProductFormScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = category,
-                onValueChange = { category = it },
-                label = { Text("Categoría") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            ExposedDropdownMenuBox(
+                expanded = isCategoryMenuExpanded,
+                onExpandedChange = { isCategoryMenuExpanded = !isCategoryMenuExpanded }
+            ) {
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { },
+                    label = { Text("Categoría") },
+                    readOnly = true,
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = isCategoryMenuExpanded,
+                    onDismissRequest = { isCategoryMenuExpanded = false }
+                ) {
+                    categories.forEach { cat ->
+                        DropdownMenuItem(
+                            text = { Text(cat.nombre) },
+                            onClick = {
+                                category = cat.nombre
+                                isCategoryMenuExpanded = false
+                            }
+                        )
+                    }
+
+                    // Opción futura para crear categoría
+                    DropdownMenuItem(
+                        text = { Text("Nueva categoría… (pendiente)") },
+                        onClick = {
+                            // Aquí después podrás abrir un diálogo para crear nueva categoría
+                            isCategoryMenuExpanded = false
+                        }
+                    )
+                }
+            }
+
 
             OutlinedTextField(
                 value = stock,

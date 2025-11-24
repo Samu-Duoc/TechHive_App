@@ -6,9 +6,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -18,30 +16,94 @@ import coil.compose.AsyncImage
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.layout.FlowRow   // 👈 IMPORTANTE
 
 @Composable
 fun ProductGridScreen(
     productViewModel: ProductViewModel,
-    onProductClick: (Long) -> Unit
+    onProductClick: (Long) -> Unit,
+    initialCategory: String? = null      //filtro inicial opcional
 ) {
     val uiState by productViewModel.uiState.collectAsState()
-
     val products = uiState.products
 
-    // 👉 MOSTRAR SOLO UNA CARÁTULA POR SKU
-    val productsForGrid = products.distinctBy { it.sku }
+    // categorías distintas de los productos
+    val allCategories = remember(products) {
+        products.map { it.category }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+    }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    var selectedCategory by remember { mutableStateOf(initialCategory) }
+
+    // aplicar filtro por categoría (si hay)
+    val filteredProducts = remember(products, selectedCategory) {
+        val base = if (selectedCategory.isNullOrBlank()) products
+        else products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
+
+        // solo una carátula por SKU
+        base.distinctBy { it.sku }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
-        items(productsForGrid) { product ->
-            ProductGridCard(
-                product = product,
-                onClick = { onProductClick(product.id) }
+
+        // ---- FILTRO DE CATEGORÍAS ----
+        if (allCategories.isNotEmpty()) {
+            CategoryFilterRow(
+                categories = allCategories,
+                selectedCategory = selectedCategory,
+                onCategorySelected = { selectedCategory = it }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // ---- GRID DE PRODUCTOS ----
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(filteredProducts) { product ->
+                ProductGridCard(
+                    product = product,
+                    onClick = { onProductClick(product.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterRow(
+    categories: List<String>,
+    selectedCategory: String?,
+    onCategorySelected: (String?) -> Unit
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // chip "Todas"
+        FilterChip(
+            selected = selectedCategory == null,
+            onClick = { onCategorySelected(null) },
+            label = { Text("Todas") },
+            modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+        )
+
+        categories.forEach { cat ->
+            FilterChip(
+                selected = selectedCategory.equals(cat, ignoreCase = true),
+                onClick = { onCategorySelected(cat) },
+                label = { Text(cat) },
+                modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
             )
         }
     }
@@ -60,7 +122,6 @@ fun ProductGridCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
-
             AsyncImage(
                 model = product.imageUrl,
                 contentDescription = product.name,
@@ -71,7 +132,6 @@ fun ProductGridCard(
             )
 
             Column(modifier = Modifier.padding(12.dp)) {
-
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.titleMedium,

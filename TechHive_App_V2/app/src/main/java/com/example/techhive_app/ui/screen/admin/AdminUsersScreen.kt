@@ -11,7 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.techhive_app.data.remote.dto.LoginResponseDto
+import com.example.techhive_app.data.remote.dto.auth.UsuarioDTO
 import com.example.techhive_app.data.repository.AuthRemoteRepository
 
 @Composable
@@ -19,14 +19,14 @@ fun AdminUsersScreen(
     authRemoteRepository: AuthRemoteRepository,
     onBack: () -> Unit
 ) {
-    var users by remember { mutableStateOf<List<LoginResponseDto>>(emptyList()) }
+    var users by remember { mutableStateOf<List<UsuarioDTO>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         try {
             val result = authRemoteRepository.getAllUsers()
-            // Solo clientes (deja CLIENTE o USER según tu MS)
+            // Solo clientes (CLIENTE según tu MS)
             users = result.filter { it.rol.equals("CLIENTE", ignoreCase = true) }
             isLoading = false
         } catch (e: Exception) {

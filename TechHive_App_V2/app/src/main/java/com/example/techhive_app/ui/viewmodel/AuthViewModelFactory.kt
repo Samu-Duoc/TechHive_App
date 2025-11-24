@@ -1,20 +1,20 @@
 package com.example.techhive_app.ui.viewmodel
 
-import androidx.lifecycle.ViewModel                              // Tipo base ViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.techhive_app.data.repository.UserRepository  // Repositorio a inyectar
+import com.example.techhive_app.data.local.storage.UserPreferences
+import com.example.techhive_app.data.repository.UserRepository
 
 class AuthViewModelFactory(
-    private val repository: UserRepository // Dependencia que inyectaremos
+    private val repository: UserRepository,
+    private val prefs: UserPreferences
 ) : ViewModelProvider.Factory {
 
-    @Suppress("UNCHECKED_CAST") // Evitar warning de cast genérico
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        // Si solicitan AuthViewModel, lo creamos con el repo
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-            return AuthViewModel(repository) as T
+            return AuthViewModel(repository, prefs) as T
         }
-        // Si piden otra clase, lanzamos error descriptivo
         throw IllegalArgumentException("ViewModel class desconocido: ${modelClass.name}")
     }
 }

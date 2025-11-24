@@ -10,10 +10,28 @@ fun validateEmail(email: String): String? {                            // Retorn
 }
 
 // Valida que el nombre contenga solo letras y espacios
-fun validateNameLettersOnly(name: String): String? {                   // Valida nombre
-    if (name.isBlank()) return "El nombre es obligatorio"              // Regla 1: no vacío
-    val regex = Regex("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")                      // Regla 2: solo letras y espacios (con tildes/ñ)
-    return if (!regex.matches(name)) "Solo letras y espacios" else null// Mensaje si falla
+fun validateNameLettersOnly(name: String, fieldName: String = "Nombre"): String? { // 1. Añadimos el parámetro
+    if (name.isBlank()) return "El $fieldName es obligatorio" // 2. Lo usamos en el mensaje
+    val regex = Regex("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")
+    return if (!regex.matches(name)) "Solo letras y espacios" else null
+}
+
+
+//Validación de Rut
+fun validateRut(rut: String): String? {
+    if (rut.isBlank()) return "El RUT es obligatorio"
+    // Permite números y la letra 'k' o 'K' al final, opcionalmente.
+    val regex = Regex("^[0-9]{7,8}[0-9kK]?$")
+    if (!regex.matches(rut)) return "Formato de RUT inválido (sin puntos ni guion)"
+    return null
+}
+
+
+//Validación de Dirección
+fun validateAddress(address: String): String? {
+    if (address.isBlank()) return "La dirección es obligatoria"
+    if (address.length < 5) return "La dirección es muy corta"
+    return null
 }
 
 // Valida que el teléfono tenga solo dígitos y una longitud razonable
