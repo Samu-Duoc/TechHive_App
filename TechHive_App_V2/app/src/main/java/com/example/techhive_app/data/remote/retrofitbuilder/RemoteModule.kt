@@ -20,7 +20,7 @@ object RemoteModule {
 
     // Emulador Android hablando con tu PC (localhost:8081)
     // Cambia la IP según tu red local
-    private const val BASE_URL = "http://192.168.1.96:8081/"
+    private const val BASE_URL = "http://10.0.2.2:8081/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -43,18 +43,18 @@ object RemoteModule {
 
 
     //PRODCUTOS
-    private const val PRODUCT_BASE_URL = "http://192.168.1.96:8082/"
+    private const val PRODUCT_BASE_URL = "http://10.0.2.2:8082/"
 
     val productApi: ProductApi by lazy {
         Retrofit.Builder()
-            .baseUrl(PRODUCT_BASE_URL)     // con slash al final
+            .baseUrl(PRODUCT_BASE_URL)  // con slash al final
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ProductApi::class.java)
     }
 
     //CONTACTO
-    private const val CONTACT_BASE_URL = "http://192.168.1.96:8085/"
+    private const val CONTACT_BASE_URL = "http://10.0.2.2:8085/"
 
     val contactApi: ContactApi by lazy {
         Retrofit.Builder()
@@ -66,7 +66,7 @@ object RemoteModule {
     }
 
     //PEDIDOS
-    private const val PEDIDO_BASE_URL = "http://192.168.1.96:8084/"
+    private const val PEDIDO_BASE_URL = "http://10.0.2.2:8084/"
 
     val pedidoApi: PedidoApi by lazy {
         Retrofit.Builder()

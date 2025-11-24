@@ -29,6 +29,8 @@ import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 
 // Modelo de las categorías
@@ -63,7 +65,8 @@ fun InicioScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF0F2F5))
-            .padding(vertical = 8.dp)
+            .verticalScroll(rememberScrollState()) // Habilitar desplazamiento vertical
+            .padding(top = 8.dp, bottom = 96.dp)
     ) {
         SearchBar()
         PromotionalBanner()
