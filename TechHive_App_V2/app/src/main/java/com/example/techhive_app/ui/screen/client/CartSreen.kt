@@ -10,9 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,7 +20,11 @@ import androidx.compose.ui.unit.dp
 import com.example.techhive_app.data.local.cart.Cart
 import com.example.techhive_app.data.local.cart.CartItem
 import com.example.techhive_app.data.local.order.OrderManager
+import com.example.techhive_app.data.remote.dto.Pedido.CrearPedidoPagoDTO
+import com.example.techhive_app.data.remote.dto.Pedido.ItemPedidoDTO
+import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
 import com.example.techhive_app.ui.util.formatPrice
+import kotlinx.coroutines.launch
 
 @Composable
 fun CartScreen(
@@ -30,6 +32,7 @@ fun CartScreen(
 ) {
     val cartItems by Cart.items.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -77,27 +80,77 @@ fun CartScreen(
 
                 Button(
                     onClick = {
-                        val orderId = OrderManager.createOrderFromCart()
-                        if (orderId == -1L) {
+                        // snapshot del carrito ANTES de vaciarlo
+                        val itemsSnapshot = cartItems.toList()
+
+                        if (itemsSnapshot.isEmpty()) {
                             Toast.makeText(
                                 context,
                                 "No hay productos en el carrito",
                                 Toast.LENGTH_SHORT
                             ).show()
-                        } else {
+                            return@Button
+                        }
+
+                        // 1) Crear orden LOCAL (para historial + comprobante)
+                        val orderId = OrderManager.createOrderFromCart()
+                        if (orderId == -1L) {
                             Toast.makeText(
                                 context,
-                                "Orden creada #$orderId",
+                                "No se pudo crear la orden",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            onCheckout(orderId)
+                            return@Button
                         }
+
+                        Toast.makeText(
+                            context,
+                            "Orden creada #$orderId",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        // 2) Llamar al microservicio Pedidos+Pagos en segundo plano
+                        //Recordar el pedido funciona pero arroga error cuando paga, pero si sube el pedido a la base de datos. 
+                        scope.launch {
+                            try {
+                                val dto = CrearPedidoPagoDTO(
+                                    usuarioId = "1",        // TODO: reemplazar por el id real del usuario logueado
+                                    direccionId = "1",      // TODO: id real de dirección
+                                    metodoPago = "WEB",
+                                    total = totalPrice,
+                                    items = itemsSnapshot.map { cartItem ->
+                                        ItemPedidoDTO(
+                                            productoId = cartItem.product.id.toString(),
+                                            nombreProducto = cartItem.product.name,
+                                            cantidad = cartItem.quantity,
+                                            precioUnitario = cartItem.product.price
+                                        )
+                                    }
+                                )
+
+                                val comprobante = RemoteModule.pedidoApi.pagar(dto)
+
+                                Toast.makeText(
+                                    context,
+                                    comprobante.mensaje,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "Error al registrar el pedido en el servidor",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+
+                        // 3) Navegar al comprobante (usando la orden LOCAL)
+                        onCheckout(orderId)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Finalizar compra")
                 }
-
             }
         }
     }
