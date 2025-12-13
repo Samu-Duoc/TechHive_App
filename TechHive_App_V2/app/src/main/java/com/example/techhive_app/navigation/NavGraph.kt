@@ -107,9 +107,10 @@ fun AppNavGraph(
         Route.AdminProducts.path,
         Route.AdminAddProduct.path,
         Route.AdminEditProduct.path,
+        Route.AdminMessages.path,
         Route.ChangePassword.path
-
     )
+
 
     // si es admin, NUNCA mostramos la barra del cliente
     val showClientBar = !isAdminUser && currentRoute !in hideClientBarRoutes
@@ -373,7 +374,7 @@ fun AppNavGraph(
                 } else {
                     AdminHomeScreen(
                         onNavigateToProducts = { navController.navigate(Route.AdminProducts.path) },
-                        onNavigateToUsers = { navController.navigate(Route.AdminUsers.path) },
+                        onNavigateToMessages = { navController.navigate(Route.AdminMessages.path) },
                         onNavigateToOrders = { navController.navigate(Route.AdminOrders.path) },
                         onNavigateToProfile = { navController.navigate(Route.Profile.path) },
                         onAddProduct = { navController.navigate(Route.AdminAddProduct.path) }
@@ -403,6 +404,8 @@ fun AppNavGraph(
                     onFinished = { navController.popBackStack() }
                 )
             }
+
+
 
             // EDITAR PRODUCTO (ADMIN)
             composable(
@@ -443,6 +446,17 @@ fun AppNavGraph(
                     Text("Esta sección mostrará los clientes registrados desde el microservicio Auth.")
                 }
             }
+
+            // MENSAJES ADMIN (CONTACTO)
+            composable(Route.AdminMessages.path) {
+                val vm = remember { com.example.techhive_app.ui.viewmodel.admin.AdminContactViewModel() }
+
+                com.example.techhive_app.ui.screen.admin.AdminMessagesScreen(
+                    viewModel = vm,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
         }
     }
 }

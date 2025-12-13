@@ -12,9 +12,7 @@ interface ContactApi {
 
     // Enviar mensaje desde la App
     @POST("contacto/guardar")
-    suspend fun enviarContacto(
-        @Body body: ContactRequest
-    ): ContactResponse
+    suspend fun enviarContacto(@Body body: ContactRequest): ContactResponse
 
     // Listar mensajes (solo ADMIN)
     @GET("contacto/listar")
@@ -22,14 +20,9 @@ interface ContactApi {
 
     // Buscar por ID
     @GET("contacto/{id}")
-    suspend fun getById(
-        @Path("id") id: Long
-    ): ContactResponse
+    suspend fun getById(@Path("id") id: Long): ContactResponse
 
     // Eliminar contacto (ADMIN)
     @DELETE("contacto/{id}")
-    suspend fun eliminar(
-        @Path("id") id: Long
-    )
+    suspend fun eliminar(@Path("id") id: Long)
 }
-

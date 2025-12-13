@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,7 +34,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun AdminHomeScreen(
     onNavigateToProducts: () -> Unit,
-    onNavigateToUsers: () -> Unit,
+    onNavigateToMessages: () -> Unit,
     onNavigateToOrders: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onAddProduct: () -> Unit
@@ -82,12 +83,13 @@ fun AdminHomeScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuickActionCard(
-                        title = "Clientes",
-                        description = "Usuarios registrados",
-                        icon = Icons.Default.Group,
+                        title = "Mensajes",
+                        description = "Consultas de clientes",
+                        icon = Icons.Default.ChatBubble,
                         modifier = Modifier.weight(1f),
-                        onClick = onNavigateToUsers
+                        onClick = onNavigateToMessages
                     )
+
                     QuickActionCard(
                         title = "Cuenta",
                         description = "Perfil de administrador",

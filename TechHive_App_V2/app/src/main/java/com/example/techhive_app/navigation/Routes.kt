@@ -46,6 +46,9 @@
 
         data object AdminUsers  : Route("admin_users")
 
+        //Mensjaes de clientes
+        data object AdminMessages : Route("admin_messages")
+
         //Nuevas rutas para mostrar el admin
         data object SplashDecision : Route("splash_decision/{email}") {
             fun createRoute(email: String) = "splash_decision/$email"
@@ -63,6 +66,9 @@
 
         //CONTACTO
         data object Contact : Route("contact")
+
+
+
 
 
     }
