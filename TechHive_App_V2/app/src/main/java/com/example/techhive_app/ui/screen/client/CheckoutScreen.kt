@@ -10,12 +10,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.techhive_app.data.local.cart.Cart
+import com.example.techhive_app.data.local.order.ReceiptManager
 import com.example.techhive_app.data.remote.dto.Pedido.CrearPedidoPagoDTO
 import com.example.techhive_app.data.remote.dto.Pedido.ItemPedidoDTO
 import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
-import com.example.techhive_app.data.local.order.ReceiptManager
 import com.example.techhive_app.ui.util.formatPrice
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +68,6 @@ fun CheckoutScreen(
             Text("Método de pago", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
 
-            // Cards simples (mock)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 methods.forEach { method ->
                     val selected = method == selectedMethod
@@ -97,13 +97,12 @@ fun CheckoutScreen(
                     }
 
                     scope.launch {
+                        isLoading = true
                         try {
-                            isLoading = true
-
                             val dto = CrearPedidoPagoDTO(
                                 usuarioId = userId,
                                 direccionId = "1",
-                                metodoPago = selectedMethod, // 👈 ficticio
+                                metodoPago = selectedMethod,
                                 total = totalPrice,
                                 items = cartItems.map { cartItem ->
                                     ItemPedidoDTO(
@@ -115,20 +114,25 @@ fun CheckoutScreen(
                                 }
                             )
 
-                            // POST /pedidos/pagar
-                            val comprobante = RemoteModule.pedidoApi.pagar(dto) // :contentReference[oaicite:3]{index=3}
+                            val comprobante = RemoteModule.pedidoApi.pagar(dto)
 
-                            // Guardar recibo para TicketScreen
                             ReceiptManager.setReceipt(comprobante)
-
-                            // Limpiar carrito
                             Cart.clearCart()
 
                             Toast.makeText(context, comprobante.mensaje, Toast.LENGTH_SHORT).show()
                             onPaidNavigateTicket()
 
+                        } catch (e: HttpException) {
+                            val msg = e.response()?.errorBody()?.string()
+                                ?: "Error al pagar (HTTP ${e.code()})"
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Error al pagar: ${e.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Error al pagar: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         } finally {
                             isLoading = false
                         }

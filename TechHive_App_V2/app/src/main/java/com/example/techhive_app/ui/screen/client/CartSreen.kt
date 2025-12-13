@@ -60,13 +60,8 @@ fun CartScreen(
                 items(items) { item ->
                     CartItemRow(
                         item = item,
-                        onIncrease = {
-                            Cart.increaseQuantity(item.product.id)
-                        },
-                        onDecrease = {
-                            Cart.decreaseQuantity(item.product.id)
-                            Cart.decreaseQuantity(item.product.id)
-                        },
+                        onIncrease = { Cart.increaseQuantity(item.product.id) },
+                        onDecrease = { Cart.decreaseQuantity(item.product.id) }, // ✅ una vez
                         onRemove = { Cart.removeItem(item.product.id) }
                     )
                 }
@@ -94,7 +89,7 @@ fun CartScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Ir a Pagar")
+                        Text("Ir a pagar")
                     }
                 }
             }
@@ -156,6 +151,11 @@ private fun CartItemRow(
                     text = formatPrice(item.product.price),
                     style = MaterialTheme.typography.bodyMedium
                 )
+                // opcional: mostrar stock
+                Text(
+                    text = "Stock: ${item.product.stock}",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
 
             Spacer(Modifier.width(12.dp))
@@ -173,7 +173,11 @@ private fun CartItemRow(
                     fontWeight = FontWeight.Bold
                 )
 
-                IconButton(onClick = onIncrease) {
+                // ✅ BLOQUEO POR STOCK
+                IconButton(
+                    onClick = onIncrease,
+                    enabled = item.quantity < item.product.stock
+                ) {
                     Icon(Icons.Default.Add, contentDescription = "Aumentar")
                 }
             }
