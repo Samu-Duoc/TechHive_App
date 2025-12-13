@@ -1,123 +1,115 @@
 package com.example.techhive_app.ui.screen.client
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.techhive_app.data.local.cart.Cart
 import com.example.techhive_app.data.local.cart.CartItem
-import com.example.techhive_app.data.local.order.OrderManager
-import com.example.techhive_app.data.remote.dto.Pedido.CrearPedidoPagoDTO
-import com.example.techhive_app.data.remote.dto.Pedido.ItemPedidoDTO
-import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.util.toDataImage
-import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     userId: Long,
-    onCheckout: (Long) -> Unit = {}
+    onGoCheckout: () -> Unit
 ) {
-    val cartItems by Cart.items.collectAsState()
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val items by Cart.items.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    val total = remember(items) {
+        items.sumOf { it.product.price * it.quantity }
+    }
 
-        if (cartItems.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text("Tu carrito está vacío", style = MaterialTheme.typography.titleLarge)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("My cart") }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+
+            if (items.isEmpty()) {
+                EmptyCart()
+                return@Column
             }
-        } else {
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(cartItems) { item ->
+                items(items) { item ->
                     CartItemRow(
                         item = item,
-                        onIncrease = { Cart.updateQuantity(item.product.id, item.quantity + 1) },
-                        onDecrease = { Cart.updateQuantity(item.product.id, item.quantity - 1) },
+                        onIncrease = {
+                            Cart.increaseQuantity(item.product.id)
+                        },
+                        onDecrease = {
+                            Cart.decreaseQuantity(item.product.id)
+                        },
                         onRemove = { Cart.removeItem(item.product.id) }
                     )
                 }
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                val totalPrice = cartItems.sumOf { it.product.price * it.quantity }
+            Spacer(Modifier.height(12.dp))
 
-                Text(
-                    text = "Total: ${formatPrice(totalPrice)}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total", fontWeight = FontWeight.Bold)
+                        Text(formatPrice(total), fontWeight = FontWeight.Bold)
+                    }
 
-                Button(
-                    onClick = {
-                        val itemsSnapshot = cartItems.toList()
-                        if (itemsSnapshot.isEmpty()) {
-                            Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
+                    Spacer(Modifier.height(12.dp))
 
-                        scope.launch {
-                            try {
-                                val dto = CrearPedidoPagoDTO(
-                                    usuarioId = userId,
-                                    direccionId = "1",
-                                    metodoPago = "APP",
-                                    total = totalPrice,
-                                    items = itemsSnapshot.map { cartItem ->
-                                        ItemPedidoDTO(
-                                            productoId = cartItem.product.id,
-                                            nombreProducto = cartItem.product.name,
-                                            cantidad = cartItem.quantity,
-                                            precioUnitario = cartItem.product.price
-                                        )
-                                    }
-                                )
-
-                                val comprobante = RemoteModule.pedidoApi.pagar(dto)
-
-                                val orderId = OrderManager.createOrderFromCart()
-                                Toast.makeText(context, comprobante.mensaje, Toast.LENGTH_SHORT).show()
-                                onCheckout(orderId)
-
-                            } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    "Error al procesar el pago: ${e.message}",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Finalizar compra")
+                    Button(
+                        onClick = onGoCheckout,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Checkout")
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyCart() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.ShoppingCart, contentDescription = null)
+            Spacer(Modifier.height(8.dp))
+            Text("Tu carrito está vacío", fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
+            Text("Agrega productos para continuar.")
         }
     }
 }
@@ -129,19 +121,28 @@ private fun CartItemRow(
     onDecrease: () -> Unit,
     onRemove: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp)
+    ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = toDataImage(item.product.imageBase64),
-                contentDescription = item.product.name,
-                modifier = Modifier.size(60.dp),
-                contentScale = ContentScale.Crop
-            )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Card(
+                modifier = Modifier.size(64.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                AsyncImage(
+                    model = toDataImage(item.product.imageBase64),
+                    contentDescription = item.product.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -149,23 +150,25 @@ private fun CartItemRow(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = formatPrice(item.product.price),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
 
+            Spacer(Modifier.width(12.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                IconButton(onClick = onDecrease) {
+                IconButton(onClick = onDecrease, enabled = item.quantity > 1) {
                     Icon(Icons.Default.Remove, contentDescription = "Disminuir")
                 }
 
                 Text(
                     text = item.quantity.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
 

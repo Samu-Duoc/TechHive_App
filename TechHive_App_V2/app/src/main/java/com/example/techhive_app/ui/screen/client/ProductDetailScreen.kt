@@ -94,7 +94,7 @@ private fun ProductDetailContent(
     val colorVariants = remember(product.id) { MockColorVariants.forProduct(product) }
     var selectedVariant by remember { mutableStateOf(colorVariants.firstOrNull()) }
 
-    // ✅ bytes desde base64 (sirve para PNG/JPG)
+    //bytes desde base64 (sirve para PNG/JPG)
     val imageBytes = remember(product.imageBase64) { base64ToBytes(product.imageBase64) }
 
     // Modelo:

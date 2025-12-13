@@ -67,9 +67,9 @@
         //CONTACTO
         data object Contact : Route("contact")
 
-
-
-
+        //Comporbantes
+        data object Checkout : Route("checkout")
+        data object Ticket : Route("ticket")
 
     }
 

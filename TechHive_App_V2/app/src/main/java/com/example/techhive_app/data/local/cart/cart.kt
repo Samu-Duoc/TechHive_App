@@ -53,6 +53,21 @@ object Cart {
         }
     }
 
+    //suma +1
+    fun increaseQuantity(productId: Long) {
+        val current = _items.value
+        val item = current.firstOrNull { it.product.id == productId } ?: return
+        updateQuantity(productId, item.quantity + 1)
+    }
+
+    //resta -1 (mínimo 1)
+    fun decreaseQuantity(productId: Long) {
+        val current = _items.value
+        val item = current.firstOrNull { it.product.id == productId } ?: return
+        val newQty = (item.quantity - 1).coerceAtLeast(1)
+        updateQuantity(productId, newQty)
+    }
+
     // Elimina un producto del carrito
     fun removeItem(productId: Long) {
         val currentItems = _items.value.toMutableList()

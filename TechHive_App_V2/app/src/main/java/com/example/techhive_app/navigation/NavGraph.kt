@@ -48,6 +48,9 @@ import com.example.techhive_app.ui.viewmodel.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
 import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
+import com.example.techhive_app.ui.screen.client.CheckoutScreen
+import com.example.techhive_app.ui.screen.client.TicketScreen
+
 
 
 import kotlinx.coroutines.CoroutineScope
@@ -273,16 +276,11 @@ fun AppNavGraph(
 
             // ---------- CARRITO ----------
             composable(Route.Cart.path) {
-                // Leemos el userId desde las preferencias (puede ser null)
                 val userId by userPrefs.getUserId.collectAsState(initial = null)
 
                 CartScreen(
                     userId = userId ?: 0L,
-                    onCheckout = { orderId ->
-                        if (orderId != -1L) {
-                            navController.navigate(Route.OrderConfirmation.createRoute(orderId))
-                        }
-                    }
+                    onGoCheckout = { navController.navigate(Route.Checkout.path) }
                 )
             }
 
@@ -456,6 +454,30 @@ fun AppNavGraph(
                     onBack = { navController.popBackStack() }
                 )
             }
+
+            // CHECKOUT
+            composable(Route.Checkout.path) {
+                val userId by userPrefs.getUserId.collectAsState(initial = null)
+
+                CheckoutScreen(
+                    userId = userId ?: 0L,
+                    onBack = { navController.popBackStack() },
+                    onPaidNavigateTicket = { navController.navigate(Route.Ticket.path) }
+                )
+            }
+
+            // TICKET
+            composable(Route.Ticket.path) {
+                TicketScreen(
+                    onGoHome = {
+                        navController.navigate(Route.Inicio.path) {
+                            popUpTo(Route.Inicio.path) { inclusive = true }
+                        }
+                    },
+                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
+                )
+            }
+
 
         }
     }
