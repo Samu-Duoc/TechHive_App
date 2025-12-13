@@ -23,7 +23,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.techhive_app.data.local.storage.UserPreferences
-import com.example.techhive_app.ui.viewmodel.AuthViewModel
+import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
 import com.example.techhive_app.data.remote.dto.auth.UpdateProfileDto
 import java.io.File
 import java.text.SimpleDateFormat

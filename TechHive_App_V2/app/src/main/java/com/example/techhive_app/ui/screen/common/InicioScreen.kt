@@ -27,12 +27,11 @@ import androidx.compose.ui.unit.sp
 import com.example.techhive_app.R
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.formatPrice
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import coil.compose.AsyncImage
-import com.example.techhive_app.ui.util.toDataImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
 

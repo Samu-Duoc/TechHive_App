@@ -18,7 +18,7 @@ fun ProfileMenuScreen(
     onAddress: () -> Unit,
     onHistory: () -> Unit,
     onLogout: () -> Unit,
-    historyLabel: String = "Historial de compras"
+    historyLabel: String = "Mi Ordenes"
 ) {
     Scaffold(
         topBar = {

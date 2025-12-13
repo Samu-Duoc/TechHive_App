@@ -29,7 +29,7 @@ import com.example.techhive_app.ui.components.AppNavBar
 import com.example.techhive_app.ui.screen.client.AddressScreen
 import com.example.techhive_app.ui.screen.client.CartScreen
 import com.example.techhive_app.ui.screen.client.OrderConfirmationScreen
-import com.example.techhive_app.ui.screen.client.OrderHistoryScreen
+import com.example.techhive_app.ui.screen.client.MyOrdersScreen
 import com.example.techhive_app.ui.screen.client.ProductDetailScreen
 import com.example.techhive_app.ui.screen.client.ProductGridScreen
 import com.example.techhive_app.ui.screen.common.HomeScreen
@@ -44,12 +44,13 @@ import com.example.techhive_app.ui.screen.admin.AdminHomeScreen
 import com.example.techhive_app.ui.screen.admin.AdminProductGridScreen
 import com.example.techhive_app.ui.screen.admin.ProductFormScreen
 import com.example.techhive_app.ui.screen.client.ContactFormScreen
-import com.example.techhive_app.ui.viewmodel.AuthViewModel
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
 import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
 import com.example.techhive_app.ui.screen.client.CheckoutScreen
 import com.example.techhive_app.ui.screen.client.TicketScreen
+import com.example.techhive_app.ui.screen.admin.AdminOrdersScreen
 
 
 
@@ -284,34 +285,40 @@ fun AppNavGraph(
                 )
             }
 
-            // ---------- COMPROBANTE (ORDEN) ----------
+            //  ---------- COMPROBANTE (ORDEN) ahora pedidoId String ----------
             composable(
                 route = Route.OrderConfirmation.path,
-                arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+                arguments = listOf(navArgument("pedidoId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val orderId = backStackEntry.arguments?.getLong("orderId") ?: -1L
+                val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
+
                 OrderConfirmationScreen(
-                    orderId = orderId,
+                    pedidoId = pedidoId,
                     onGoHome = {
                         navController.navigate(Route.Inicio.path) {
                             popUpTo(Route.Inicio.path) { inclusive = true }
                         }
                     },
-                    onGoHistory = {
-                        navController.navigate(Route.OrderHistory.path)
-                    }
+                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
                 )
             }
 
             // ---------- HISTORIAL CLIENTE ----------
             composable(Route.OrderHistory.path) {
-                OrderHistoryScreen(
-                    onBack = { navController.popBackStack() },
-                    onOrderSelected = { id ->
-                        navController.navigate(Route.OrderConfirmation.createRoute(id))
+
+                val userId by userPrefs.getUserId.collectAsState(initial = null)
+
+                MyOrdersScreen(
+                    usuarioId = userId ?: 0L,
+                    onOpenOrderDetails = { pedidoId ->
+                        navController.navigate(Route.OrderConfirmation.createRoute(pedidoId))
                     }
                 )
             }
+
+
+
+
 
             // ---------- MENÚ PERFIL ----------
             composable(Route.ProfileMenu.path) {
@@ -420,13 +427,10 @@ fun AppNavGraph(
 
             // LISTADO DE PEDIDOS PARA ADMIN
             composable(Route.AdminOrders.path) {
-                OrderHistoryScreen(
-                    onBack = { navController.popBackStack() },
-                    onOrderSelected = { id ->
-                        navController.navigate(Route.OrderConfirmation.createRoute(id))
-                    }
-                )
+                AdminOrdersScreen()
             }
+
+
 
             // USUARIOS ADMIN (placeholder)
             composable(Route.AdminUsers.path) {

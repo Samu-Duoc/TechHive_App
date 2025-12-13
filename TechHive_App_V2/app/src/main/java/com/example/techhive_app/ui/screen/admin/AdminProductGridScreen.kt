@@ -20,7 +20,7 @@ import coil.request.ImageRequest
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.base64ToBytes
 import com.example.techhive_app.ui.util.formatPrice
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

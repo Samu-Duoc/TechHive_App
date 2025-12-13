@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.techhive_app.data.remote.dto.product.ProductCategoryDto

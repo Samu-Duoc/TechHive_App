@@ -18,7 +18,7 @@ import coil.request.ImageRequest
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.util.base64ToBytes
 import com.example.techhive_app.ui.util.formatPrice
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.graphics.Color
@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 fun ProductGridScreen(
     productViewModel: ProductViewModel,
     onProductClick: (Long) -> Unit,
-    initialCategory: String? = null // ✅ vuelve este parámetro
+    initialCategory: String? = null
 ) {
     val uiState by productViewModel.uiState.collectAsState()
     val products = uiState.products

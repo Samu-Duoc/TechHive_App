@@ -1,4 +1,4 @@
-package com.example.techhive_app.ui.viewmodel
+package com.example.techhive_app.ui.viewmodel.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -11,7 +11,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.techhive_app.data.local.storage.UserPreferences
-import com.example.techhive_app.ui.viewmodel.AuthViewModel
+import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
 
 @Composable
 fun ChangePasswordScreen(

@@ -18,10 +18,10 @@ import com.example.techhive_app.data.repository.ProductRepository
 import com.example.techhive_app.data.repository.UserRepository
 import com.example.techhive_app.navigation.AppNavGraph
 import com.example.techhive_app.ui.theme.TechHive_AppTheme
-import com.example.techhive_app.ui.viewmodel.AuthViewModel
-import com.example.techhive_app.ui.viewmodel.AuthViewModelFactory
-import com.example.techhive_app.ui.viewmodel.ProductViewModel
-import com.example.techhive_app.ui.viewmodel.ProductViewModelFactory
+import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
+import com.example.techhive_app.ui.viewmodel.common.AuthViewModelFactory
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
+import com.example.techhive_app.ui.viewmodel.common.ProductViewModelFactory
 
 
 
