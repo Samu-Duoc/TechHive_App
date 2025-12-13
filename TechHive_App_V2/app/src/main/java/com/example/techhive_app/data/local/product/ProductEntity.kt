@@ -6,17 +6,16 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "products")
 data class ProductEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
+    @PrimaryKey
+    val id: Long,
 
     val name: String,
     val description: String,
     val price: Double,
 
-    // IMPORTANTE: drawable local, NO String, NO imageRes extra
-    @DrawableRes val imageUrl: Int,
-
+    val imageBase64: String?,
     val stock: Int,
     val sku: String,
     val category: String
 )
+

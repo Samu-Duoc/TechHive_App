@@ -1,59 +1,53 @@
 package com.example.techhive_app.data.repository
 
+import com.example.techhive_app.data.local.product.ProductDao
 import com.example.techhive_app.data.local.product.ProductEntity
+import com.example.techhive_app.data.mapper.toEntity
 import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
-import com.example.techhive_app.data.remote.dto.product.toEntity
 import com.example.techhive_app.data.remote.retrofit.ProductApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 
 class ProductRepository(
-    private val api: ProductApi   // Microservicio
+    private val api: ProductApi,
+    private val dao: ProductDao
 ) {
+    // ---- LOCAL (UI) ----
+    fun observeAllProducts(): Flow<List<ProductEntity>> = dao.getAll()
+    fun observeProductById(productId: Long): Flow<ProductEntity?> = dao.getById(productId)
 
-    // ===== LISTAR TODOS =====
-    fun getAllProducts(): Flow<List<ProductEntity>> = flow {
-        val remoteList = api.getProductos()                // MS /productos
-        val entities = remoteList.map { it.toEntity() }    // USAS TU EXTENSION REAL
-        emit(entities)
+    suspend fun upsertLocal(product: ProductEntity) = dao.insert(product)
+    suspend fun deleteLocal(productId: Long) = dao.deleteById(productId)
+
+    // ---- REMOTE ----
+    suspend fun fetchRemote(): Result<List<ProductRemoteDto>> = try {
+        Result.success(api.getProducts())
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
-    // ===== OBTENER UNO POR ID =====
-    fun getProductById(id: Long): Flow<ProductEntity?> = flow {
-        val dto = api.getProductoById(id)                  // MS /productos/{id}
-        emit(dto.toEntity())
+    suspend fun createRemote(dto: ProductRemoteDto): Result<ProductRemoteDto> = try {
+        Result.success(api.create(dto))
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
-    // ===== CREAR / ACTUALIZAR =====
-    suspend fun insertProduct(product: ProductEntity) {
-        val dto = product.toRemoteDto()
+    suspend fun updateRemote(id: Long, dto: ProductRemoteDto): Result<ProductRemoteDto> = try {
+        Result.success(api.update(id, dto))
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 
-        if (product.id == 0L) {
-            api.insertProducto(dto.copy(id = null))
-        } else {
-            api.updateProducto(product.id, dto)
+    suspend fun deleteRemote(id: Long): Result<Unit> = try {
+        api.delete(id)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    // ---- SYNC ----
+    suspend fun syncFromRemoteToLocal(): Result<Unit> {
+        return fetchRemote().mapCatching { remoteList ->
+            remoteList.forEach { dao.insert(it.toEntity()) }
         }
-    }
-
-    // ===== ELIMINAR =====
-    suspend fun deleteProductById(id: Long) {
-        api.deleteProducto(id)
-    }
-
-
-    // ==================== MAPEOS ====================
-    // SOLO dejamos este: Entity → Remote DTO
-    private fun ProductEntity.toRemoteDto(): ProductRemoteDto {
-        return ProductRemoteDto(
-            id = if (this.id == 0L) null else this.id,  // para crear/actualizar
-            nombre = this.name,
-            descripcion = this.description,
-            precio = this.price,
-            stock = this.stock,
-            estado = "Nuevo", // o el estado que manejes desde la app
-            categoria = this.category,
-            disponibilidad = if (this.stock > 0) "Disponible" else "Agotado",
-            sku = this.sku
-        )
     }
 }

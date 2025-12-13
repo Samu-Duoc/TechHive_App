@@ -31,6 +31,10 @@ import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import coil.compose.AsyncImage
+import com.example.techhive_app.ui.util.toDataImage
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
 
 
 // Modelo de las categorías
@@ -315,12 +319,16 @@ fun ContactCard(onClick: () -> Unit) {
     }
 }
 
-
 @Composable
 fun FlashProductCard(
     product: ProductEntity,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val bytes = remember(product.imageBase64) {
+        com.example.techhive_app.ui.util.base64ToBytes(product.imageBase64)
+    }
+
     Card(
         modifier = Modifier
             .width(180.dp)
@@ -330,14 +338,18 @@ fun FlashProductCard(
         onClick = onClick
     ) {
         Column {
-            Image(
-                painter = painterResource(id = product.imageUrl),
+            AsyncImage(
+                model = coil.request.ImageRequest.Builder(context)
+                    .data(bytes)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.dp),
                 contentScale = ContentScale.Crop
             )
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -345,16 +357,14 @@ fun FlashProductCard(
             ) {
                 Text(
                     text = product.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2
+                    maxLines = 2,
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = formatPrice(product.price),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

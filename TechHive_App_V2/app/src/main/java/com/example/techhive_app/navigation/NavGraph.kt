@@ -387,9 +387,13 @@ fun AppNavGraph(
                     productViewModel = productViewModel,
                     onEditProduct = { id ->
                         navController.navigate(Route.AdminEditProduct.createRoute(id))
+                    },
+                    onAddProduct = {
+                        navController.navigate(Route.AdminAddProduct.path)
                     }
                 )
             }
+
 
             // NUEVO PRODUCTO (ADMIN)
             composable(Route.AdminAddProduct.path) {

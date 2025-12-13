@@ -2,7 +2,6 @@ package com.example.techhive_app.ui.screen.admin
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -14,22 +13,33 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.techhive_app.data.remote.dto.product.ProductCategoryDto
 import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
+import com.example.techhive_app.ui.util.uriToDataImage
+import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 
-@OptIn(ExperimentalMaterial3Api::class) ////Para que agarre el TOPBAR
+
+
+
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductFormScreen(
     productViewModel: ProductViewModel,
-    productId: Long? = null,     // null = crear, no null = editar
+    productId: Long? = null,
     onFinished: () -> Unit
 ) {
     val uiState by productViewModel.uiState.collectAsState()
     val productToEdit = uiState.products.find { it.id == productId }
+    val ctx = LocalContext.current
 
     var name by remember { mutableStateOf(productToEdit?.name ?: "") }
     var price by remember { mutableStateOf(productToEdit?.price?.toString() ?: "") }
@@ -37,55 +47,52 @@ fun ProductFormScreen(
     var category by remember { mutableStateOf(productToEdit?.category ?: "") }
     var stock by remember { mutableStateOf(productToEdit?.stock?.toString() ?: "1") }
 
+    var sku by remember { mutableStateOf(productToEdit?.sku ?: "") }
+    var skuError by remember { mutableStateOf<String?>(null) }
+
+
     val productApi = remember { RemoteModule.productApi }
 
     var categories by remember { mutableStateOf<List<ProductCategoryDto>>(emptyList()) }
-    var isCategoryMenuExpanded by remember { mutableStateOf(false)}
+    var isCategoryMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
             categories = productApi.getCategorias()
-
-            //AL editar y si la categoría existe, la deja seleccionada
             if (category.isBlank() && categories.isNotEmpty()) {
                 category = categories.first().nombre
             }
-
-        }catch (_: Exception){
-
-            // si falla el ms, puedes dejar una lista fija de respaldo
+        } catch (_: Exception) {
             categories = listOf(
                 ProductCategoryDto(0, "Smartphones"),
-                ProductCategoryDto(0, "Perifericos"),
-                ProductCategoryDto(0, "Periféricos"),
-                ProductCategoryDto(0, "Consolas"),
-                ProductCategoryDto(0, "Computadores"),
-                ProductCategoryDto(0, "Componentes"),
-                ProductCategoryDto(0, "Audio"),
                 ProductCategoryDto(0, "Accesorios"),
+                ProductCategoryDto(0, "Audio"),
+                ProductCategoryDto(0, "Componentes"),
+                ProductCategoryDto(0, "Computadores"),
+                ProductCategoryDto(0, "Consolas"),
+                ProductCategoryDto(0, "Periféricos")
             )
 
-            if (category.isBlank()){
+            if (category.isBlank()) {
                 category = categories.first().nombre
             }
         }
     }
 
-
-
-
-
-
-
-
-        // manejamos la imagen de la galería (por ahora solo preview, no se guarda en BD)
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+    val fileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        selectedImageUri = uri
+        uri?.let {
+            selectedImageUri = it
+            ctx.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
     }
+
 
     Scaffold(
         topBar = {
@@ -103,7 +110,6 @@ fun ProductFormScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // Preview de la imagen seleccionada (si hay)
             selectedImageUri?.let { uri ->
                 Image(
                     painter = rememberAsyncImagePainter(model = uri),
@@ -117,12 +123,10 @@ fun ProductFormScreen(
 
             Button(
                 onClick = {
-                    galleryLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                    fileLauncher.launch(arrayOf("image/*"))
                 }
             ) {
-                Text("Elegir imagen de galería")
+                Text("Elegir imagen (Archivos / Drive)")
             }
 
             OutlinedTextField(
@@ -146,6 +150,22 @@ fun ProductFormScreen(
                 label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            OutlinedTextField(
+                value = sku,
+                onValueChange = {
+                    sku = it
+                    skuError = null
+                },
+                label = { Text("SKU") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = skuError != null,
+                supportingText = {
+                    if (skuError != null) Text(skuError!!)
+                    else Text("Ej: SMT-APL-005 (debe ser único)")
+                }
+            )
+
 
             ExposedDropdownMenuBox(
                 expanded = isCategoryMenuExpanded,
@@ -175,17 +195,14 @@ fun ProductFormScreen(
                         )
                     }
 
-                    // Opción futura para crear categoría
                     DropdownMenuItem(
                         text = { Text("Nueva categoría… (pendiente)") },
                         onClick = {
-                            // Aquí después podrás abrir un diálogo para crear nueva categoría
                             isCategoryMenuExpanded = false
                         }
                     )
                 }
             }
-
 
             OutlinedTextField(
                 value = stock,
@@ -199,43 +216,56 @@ fun ProductFormScreen(
 
             Button(
                 onClick = {
-                    val priceDouble = price.toDoubleOrNull() ?: 0.0
+                    val priceDouble = price.replace(",", ".").toDoubleOrNull() ?: 0.0
                     val stockInt = stock.toIntOrNull() ?: 0
 
-                    // 👉 Usamos insertProduct tanto para crear como para editar (REPLACE)
-                    val finalProduct: ProductEntity = if (productId == null) {
-                        // CREAR
-                        ProductEntity(
-                            id = 0, // Room lo genera
-                            name = name,
-                            description = description,
-                            price = priceDouble,
-                            // por ahora usamos la imagen que tenga el edit (o 0 si es nuevo)
-                            imageUrl = productToEdit?.imageUrl ?: 0,
-                            stock = stockInt,
-                            sku = "ADM-${System.currentTimeMillis()}",
-                            category = category
-                        )
-                    } else {
-                        // EDITAR → copiamos el existente, manteniendo id e imageUrl
-                        productToEdit!!.copy(
-                            name = name,
-                            description = description,
-                            price = priceDouble,
-                            stock = stockInt,
-                            category = category
-                            // imageUrl se mantiene igual por ahora
-                        )
+                    // VALIDACIONES
+                    if (name.trim().isBlank()) {
+                        return@Button
                     }
 
-                    productViewModel.insertProduct(finalProduct)
+                    if (priceDouble <= 0) {
+                        return@Button
+                    }
 
-                    onFinished()
+                    if (stockInt <= 0) {
+                        return@Button
+                    }
+
+                    val skuFinal = sku.trim()
+                    if (skuFinal.isBlank()) {
+                        skuError = "SKU obligatorio"
+                        return@Button
+                    }
+
+                    val base64Image = selectedImageUri?.let { uri ->
+                        uriToDataImage(ctx.contentResolver, uri)
+                    }
+
+                    val dto = ProductRemoteDto(
+                        id = productId,
+                        nombre = name,
+                        descripcion = description,
+                        precio = priceDouble,
+                        stock = stockInt,
+                        estado = "ACTIVO",
+                        categoria = category,
+                        sku = skuFinal,
+                        imagenBase64 = base64Image
+                    )
+
+                    if (productId == null) {
+                        productViewModel.createRemote(dto) { onFinished() }
+                    } else {
+                        productViewModel.updateRemote(productId, dto) { onFinished() }
+                    }
+
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (productId == null) "Guardar producto" else "Guardar cambios")
             }
+
         }
     }
 }

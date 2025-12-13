@@ -9,30 +9,31 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.techhive_app.data.local.product.ProductEntity
+import com.example.techhive_app.ui.util.base64ToBytes
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
-import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.graphics.Color
 
-
-@OptIn (ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductGridScreen(
     productViewModel: ProductViewModel,
     onProductClick: (Long) -> Unit,
-    initialCategory: String? = null      //filtro inicial opcional
+    initialCategory: String? = null // ✅ vuelve este parámetro
 ) {
     val uiState by productViewModel.uiState.collectAsState()
     val products = uiState.products
 
-    // categorías distintas de los productos
+    // categorías disponibles
     val allCategories = remember(products) {
         products.map { it.category }
             .filter { it.isNotBlank() }
@@ -42,12 +43,10 @@ fun ProductGridScreen(
 
     var selectedCategory by remember { mutableStateOf(initialCategory) }
 
-    // aplicar filtro por categoría (si hay)
     val filteredProducts = remember(products, selectedCategory) {
         val base = if (selectedCategory.isNullOrBlank()) products
         else products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
 
-        // solo una carátula por SKU
         base.distinctBy { it.sku }
     }
 
@@ -56,15 +55,13 @@ fun ProductGridScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-
-        // ---- FILTRO DE CATEGORÍAS ----
+        // Chips categorías
         if (allCategories.isNotEmpty()) {
             CategoryFilterRow(
                 categories = allCategories,
                 selectedCategory = selectedCategory,
                 onCategorySelected = { selectedCategory = it }
             )
-
             Spacer(modifier = Modifier.height(12.dp))
         }
 
@@ -73,10 +70,9 @@ fun ProductGridScreen(
                 text = "Error al cargar productos: ${uiState.error}",
                 color = Color.Red
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-
-        // ---- GRID DE PRODUCTOS ----
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
@@ -100,10 +96,7 @@ private fun CategoryFilterRow(
     selectedCategory: String?,
     onCategorySelected: (String?) -> Unit
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // chip "Todas"
+    FlowRow(modifier = Modifier.fillMaxWidth()) {
         FilterChip(
             selected = selectedCategory == null,
             onClick = { onCategorySelected(null) },
@@ -123,25 +116,30 @@ private fun CategoryFilterRow(
 }
 
 @Composable
-fun ProductGridCard(
+private fun ProductGridCard(
     product: ProductEntity,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val bytes = remember(product.imageBase64) { base64ToBytes(product.imageBase64) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
             AsyncImage(
-                model = product.imageUrl,
+                model = ImageRequest.Builder(context)
+                    .data(bytes)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
-                contentScale = ContentScale.Crop
+                    .height(180.dp),
+                contentScale = ContentScale.Fit
             )
 
             Column(modifier = Modifier.padding(12.dp)) {
@@ -152,9 +150,7 @@ fun ProductGridCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
                     text = formatPrice(product.price),
                     style = MaterialTheme.typography.bodyLarge,

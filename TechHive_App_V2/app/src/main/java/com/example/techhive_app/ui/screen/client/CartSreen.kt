@@ -1,7 +1,6 @@
 package com.example.techhive_app.ui.screen.client
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,10 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.techhive_app.data.local.cart.Cart
 import com.example.techhive_app.data.local.cart.CartItem
 import com.example.techhive_app.data.local.order.OrderManager
@@ -24,12 +24,13 @@ import com.example.techhive_app.data.remote.dto.Pedido.CrearPedidoPagoDTO
 import com.example.techhive_app.data.remote.dto.Pedido.ItemPedidoDTO
 import com.example.techhive_app.data.remote.retrofitbuilder.RemoteModule
 import com.example.techhive_app.ui.util.formatPrice
+import com.example.techhive_app.ui.util.toDataImage
 import kotlinx.coroutines.launch
 
 @Composable
 fun CartScreen(
     userId: Long,
-    onCheckout: (Long) -> Unit = {}  // devuelve orderId
+    onCheckout: (Long) -> Unit = {}
 ) {
     val cartItems by Cart.items.collectAsState()
     val context = LocalContext.current
@@ -55,20 +56,13 @@ fun CartScreen(
                 items(cartItems) { item ->
                     CartItemRow(
                         item = item,
-                        onIncrease = {
-                            Cart.updateQuantity(item.product.id, item.quantity + 1)
-                        },
-                        onDecrease = {
-                            Cart.updateQuantity(item.product.id, item.quantity - 1)
-                        },
-                        onRemove = {
-                            Cart.removeItem(item.product.id)
-                        }
+                        onIncrease = { Cart.updateQuantity(item.product.id, item.quantity + 1) },
+                        onDecrease = { Cart.updateQuantity(item.product.id, item.quantity - 1) },
+                        onRemove = { Cart.removeItem(item.product.id) }
                     )
                 }
             }
 
-            // Pie: total + botón
             Column(modifier = Modifier.padding(16.dp)) {
                 val totalPrice = cartItems.sumOf { it.product.price * it.quantity }
 
@@ -79,19 +73,18 @@ fun CartScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- INICIO DEL CÓDIGO ACTUALIZADO ---
                 Button(
                     onClick = {
                         val itemsSnapshot = cartItems.toList()
                         if (itemsSnapshot.isEmpty()) {
-                            // Aunque el botón no debería estar activo, es una buena práctica de seguridad.
                             Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 
                         scope.launch {
                             try {
-                                val dto = CrearPedidoPagoDTO(    usuarioId = userId,
+                                val dto = CrearPedidoPagoDTO(
+                                    usuarioId = userId,
                                     direccionId = "1",
                                     metodoPago = "APP",
                                     total = totalPrice,
@@ -105,16 +98,18 @@ fun CartScreen(
                                     }
                                 )
 
-
                                 val comprobante = RemoteModule.pedidoApi.pagar(dto)
 
-                                // Recién aquí, si el pago fue exitoso, creas la orden local y navegas.
                                 val orderId = OrderManager.createOrderFromCart()
                                 Toast.makeText(context, comprobante.mensaje, Toast.LENGTH_SHORT).show()
                                 onCheckout(orderId)
 
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Error al procesar el pago: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    "Error al procesar el pago: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                     },
@@ -122,12 +117,10 @@ fun CartScreen(
                 ) {
                     Text("Finalizar compra")
                 }
-                // --- FIN DEL CÓDIGO ACTUALIZADO ---
             }
         }
     }
 }
-
 
 @Composable
 private fun CartItemRow(
@@ -141,11 +134,11 @@ private fun CartItemRow(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Image(
-                painter = painterResource(id = item.product.imageUrl),
+            AsyncImage(
+                model = toDataImage(item.product.imageBase64),
                 contentDescription = item.product.name,
-                modifier = Modifier.size(60.dp)
+                modifier = Modifier.size(60.dp),
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -182,10 +175,7 @@ private fun CartItemRow(
             }
 
             IconButton(onClick = onRemove) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar producto"
-                )
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar producto")
             }
         }
     }

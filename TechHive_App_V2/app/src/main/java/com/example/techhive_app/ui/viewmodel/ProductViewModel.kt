@@ -3,6 +3,7 @@ package com.example.techhive_app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techhive_app.data.local.product.ProductEntity
+import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
 import com.example.techhive_app.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,14 +11,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-// Estado de la UI para la lista de productos
 data class ProductUiState(
-    val products: List<ProductEntity> = emptyList(), // Lista de productos
-    val isLoading: Boolean = true,                  // Indicador de carga
-    val error: String? = null                       // Mensaje de error
+    val products: List<ProductEntity> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: String? = null
 )
 
-// ViewModel para la pantalla de productos
 class ProductViewModel(
     private val repository: ProductRepository
 ) : ViewModel() {
@@ -26,78 +25,72 @@ class ProductViewModel(
     val uiState: StateFlow<ProductUiState> = _uiState
 
     init {
-        loadProducts()
+        observeLocal()
+        sync()
     }
 
-    private fun loadProducts() {
+    private fun observeLocal() {
         viewModelScope.launch {
-            repository.getAllProducts()
-                .onStart {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = true,
-                        error = null
-                    )
-                }
-                .catch { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message
-                    )
-                }
+            repository.observeAllProducts()
+                .onStart { _uiState.value = _uiState.value.copy(isLoading = true, error = null) }
+                .catch { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) }
                 .collect { products ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        products = products
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, products = products)
                 }
+        }
+    }
+
+    fun sync() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.syncFromRemoteToLocal()
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                }
+            // si sale ok, el observer local actualiza solo
         }
     }
 
     fun loadProductById(productId: Long) {
+        // Tu detalle ya llama esto con LaunchedEffect :contentReference[oaicite:11]{index=11}
+        // Como estamos observando local, esto puede quedarse como "no-op",
+        // o puedes forzar un sync parcial si quieres.
+    }
+
+    // ----- ADMIN: CREAR / EDITAR / BORRAR REMOTO -----
+
+    fun createRemote(dto: ProductRemoteDto, onOk: (() -> Unit)? = null) {
         viewModelScope.launch {
-            repository.getProductById(productId)
-                .onStart {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = true,
-                        error = null
-                    )
-                }
-                .catch { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message
-                    )
-                }
-                .collect { product ->
-                    if (product != null) {
-                        val updated = _uiState.value.products.toMutableList()
-                        val index = updated.indexOfFirst { it.id == productId }
-                        if (index != -1) updated[index] = product else updated.add(product)
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            products = updated
-                        )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Producto no encontrado"
-                        )
-                    }
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.createRemote(dto)
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) }
+                .onSuccess {
+                    repository.syncFromRemoteToLocal()
+                    onOk?.invoke()
                 }
         }
     }
 
-    fun insertProduct(product: ProductEntity) {
+    fun updateRemote(id: Long, dto: ProductRemoteDto, onOk: (() -> Unit)? = null) {
         viewModelScope.launch {
-            repository.insertProduct(product)
-            loadProducts()
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.updateRemote(id, dto)
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) }
+                .onSuccess {
+                    repository.syncFromRemoteToLocal()
+                    onOk?.invoke()
+                }
         }
     }
 
-    fun deleteProduct(productId: Long) {
+    fun deleteRemote(id: Long, onOk: (() -> Unit)? = null) {
         viewModelScope.launch {
-            repository.deleteProductById(productId)
-            loadProducts()
+            repository.deleteRemote(id)
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+                .onSuccess {
+                    repository.syncFromRemoteToLocal()
+                    onOk?.invoke()
+                }
         }
     }
 }

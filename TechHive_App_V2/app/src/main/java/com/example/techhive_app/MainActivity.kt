@@ -24,6 +24,7 @@ import com.example.techhive_app.ui.viewmodel.ProductViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModelFactory
 
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +44,7 @@ fun AppRoot() {
 
     // --- AUTH / USUARIOS ---
     val userDao = db.userDao()
-    val authApi = RemoteModule.authApi   // MS de Auth
+    val authApi = RemoteModule.authApi
     val userRepository = remember { UserRepository(userDao, authApi) }
 
     // --- PREFERENCIAS (DataStore) ---
@@ -51,7 +52,8 @@ fun AppRoot() {
 
     // --- PRODUCTOS (MS productos_categorias) ---
     val productApi = RemoteModule.productApi
-    val productRepository = remember { ProductRepository(productApi) }
+    val productDao = db.productDao()
+    val productRepository = remember { ProductRepository(productApi, productDao) }
 
     // ---------- VIEWMODELS ----------
 

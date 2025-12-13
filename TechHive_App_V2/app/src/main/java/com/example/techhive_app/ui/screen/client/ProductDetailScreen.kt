@@ -1,7 +1,6 @@
 package com.example.techhive_app.ui.screen.client
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,12 +17,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.techhive_app.data.local.cart.Cart
 import com.example.techhive_app.data.local.product.ProductEntity
 import com.example.techhive_app.data.mock.MockColorVariants
+import com.example.techhive_app.ui.util.base64ToBytes
 import com.example.techhive_app.ui.util.formatPrice
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
 
@@ -89,22 +90,32 @@ private fun ProductDetailContent(
 ) {
     val context = LocalContext.current
 
-    // Variantes de color según el producto (mock por SKU / nombre)
+    // Variantes mock por SKU/nombre (si existen)
     val colorVariants = remember(product.id) { MockColorVariants.forProduct(product) }
     var selectedVariant by remember { mutableStateOf(colorVariants.firstOrNull()) }
 
-    // Imagen principal según color seleccionado o la de la BD
-    val mainImageRes = run {
-        val ctx = LocalContext.current
-        if (selectedVariant != null) {
-            val resId = ctx.resources.getIdentifier(
-                selectedVariant!!.imageName,
+    // ✅ bytes desde base64 (sirve para PNG/JPG)
+    val imageBytes = remember(product.imageBase64) { base64ToBytes(product.imageBase64) }
+
+    // Modelo:
+    // - si variante existe y tiene drawable -> resId
+    // - si no -> bytes base64
+    val mainImageModel: Any? = run {
+        val resId = selectedVariant?.let { variant ->
+            context.resources.getIdentifier(
+                variant.imageName,
                 "drawable",
-                ctx.packageName
+                context.packageName
             )
-            if (resId != 0) resId else product.imageUrl
+        } ?: 0
+
+        if (resId != 0) {
+            resId
         } else {
-            product.imageUrl
+            ImageRequest.Builder(context)
+                .data(imageBytes)
+                .crossfade(true)
+                .build()
         }
     }
 
@@ -117,7 +128,7 @@ private fun ProductDetailContent(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        // Zona de imagen grande
+        // Imagen grande
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,16 +136,16 @@ private fun ProductDetailContent(
                 .background(Color(0xFFF5F5F5)),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = mainImageRes),
+            AsyncImage(
+                model = mainImageModel,
                 contentDescription = "Imagen de ${product.name}",
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .fillMaxHeight(0.9f),
-                contentScale = ContentScale.Fit   // 👈 para que se vea completo
+                contentScale = ContentScale.Fit
             )
 
-            // Top bar (back + favorito)
+            // Top bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,10 +159,7 @@ private fun ProductDetailContent(
                         .clip(RoundedCornerShape(50))
                         .background(Color.White)
                 ) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Volver"
-                    )
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                 }
 
                 IconButton(
@@ -169,10 +177,9 @@ private fun ProductDetailContent(
             }
         }
 
-        // Contenido blanco redondeado (como la tarjeta del mockup)
+        // Tarjeta blanca
         Surface(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             color = Color.White
         ) {
@@ -181,7 +188,6 @@ private fun ProductDetailContent(
                     .fillMaxSize()
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                // Nombre + categoría
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.headlineSmall,
@@ -196,7 +202,6 @@ private fun ProductDetailContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Fila precio + "info extra" (simulando reviews)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,7 +212,6 @@ private fun ProductDetailContent(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold
                     )
-
                     Text(
                         text = "Stock: ${product.stock}",
                         style = MaterialTheme.typography.bodyMedium
@@ -216,7 +220,7 @@ private fun ProductDetailContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Selector de cantidad
+                // Cantidad
                 Text(
                     text = "Cantidad",
                     style = MaterialTheme.typography.titleMedium,
@@ -232,9 +236,7 @@ private fun ProductDetailContent(
                         onClick = { if (quantity > 1) quantity-- },
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(Icons.Default.Remove, contentDescription = "Menos")
-                    }
+                    ) { Icon(Icons.Default.Remove, contentDescription = "Menos") }
 
                     Text(
                         text = quantity.toString(),
@@ -246,14 +248,12 @@ private fun ProductDetailContent(
                         onClick = { if (quantity < maxQuantity) quantity++ },
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Más")
-                    }
+                    ) { Icon(Icons.Default.Add, contentDescription = "Más") }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Colores disponibles (si existen)
+                // Colores (mock)
                 if (colorVariants.isNotEmpty()) {
                     Text(
                         text = "Colores disponibles",
@@ -262,9 +262,7 @@ private fun ProductDetailContent(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(colorVariants) { variant ->
                             val isSelected = variant == selectedVariant
 
@@ -272,16 +270,13 @@ private fun ProductDetailContent(
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (isSelected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier
-                                    .clickable { selectedVariant = variant }
+                                modifier = Modifier.clickable { selectedVariant = variant }
                             ) {
                                 Text(
                                     text = variant.name,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                    color = if (isSelected)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -298,22 +293,15 @@ private fun ProductDetailContent(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = product.description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = product.description, style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Botón añadir al carrito
+                // Añadir al carrito
                 Button(
                     onClick = {
-                        Cart.addItem(product, quantity)   // 👈 antes hacíamos repeat(...)
-                        Toast.makeText(
-                            context,
-                            "Añadido $quantity al carrito",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Cart.addItem(product, quantity)
+                        Toast.makeText(context, "Añadido $quantity al carrito", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

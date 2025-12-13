@@ -2,34 +2,30 @@ package com.example.techhive_app.data.remote.retrofit
 
 import com.example.techhive_app.data.remote.dto.product.ProductCategoryDto
 import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Body
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.DELETE
+import retrofit2.http.*
+
 interface ProductApi {
 
-    // CATEGORÍAS
-    @GET("categorias")
-    suspend fun getCategorias(): List<ProductCategoryDto>
-
-    // PRODUCTOS
+    // ---- PRODUCTOS ----
     @GET("productos")
-    suspend fun getProductos(): List<ProductRemoteDto>
+    suspend fun getProducts(): List<ProductRemoteDto>
 
     @GET("productos/{id}")
-    suspend fun getProductoById(@Path("id") id: Long): ProductRemoteDto
+    suspend fun getProductById(@Path("id") id: Long): ProductRemoteDto
+
+    @GET("productos/categoria/{nombre}")
+    suspend fun getByCategory(@Path("nombre") category: String): List<ProductRemoteDto>
 
     @POST("productos")
-    suspend fun insertProducto(@Body dto: ProductRemoteDto)
+    suspend fun create(@Body dto: ProductRemoteDto): ProductRemoteDto
 
     @PUT("productos/{id}")
-    suspend fun updateProducto(
-        @Path("id") id: Long,
-        @Body dto: ProductRemoteDto
-    )
+    suspend fun update(@Path("id") id: Long, @Body dto: ProductRemoteDto): ProductRemoteDto
 
     @DELETE("productos/{id}")
-    suspend fun deleteProducto(@Path("id") id: Long)
+    suspend fun delete(@Path("id") id: Long)
+
+    // ---- CATEGORÍAS ----
+    @GET("categorias")
+    suspend fun getCategorias(): List<ProductCategoryDto>
 }
