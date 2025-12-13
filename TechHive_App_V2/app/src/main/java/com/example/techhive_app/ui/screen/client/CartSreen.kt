@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CartScreen(
+    userId: Long,
     onCheckout: (Long) -> Unit = {}  // devuelve orderId
 ) {
     val cartItems by Cart.items.collectAsState()
@@ -78,49 +79,25 @@ fun CartScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // --- INICIO DEL CÓDIGO ACTUALIZADO ---
                 Button(
                     onClick = {
-                        // snapshot del carrito ANTES de vaciarlo
                         val itemsSnapshot = cartItems.toList()
-
                         if (itemsSnapshot.isEmpty()) {
-                            Toast.makeText(
-                                context,
-                                "No hay productos en el carrito",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            // Aunque el botón no debería estar activo, es una buena práctica de seguridad.
+                            Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 
-                        // 1) Crear orden LOCAL (para historial + comprobante)
-                        val orderId = OrderManager.createOrderFromCart()
-                        if (orderId == -1L) {
-                            Toast.makeText(
-                                context,
-                                "No se pudo crear la orden",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@Button
-                        }
-
-                        Toast.makeText(
-                            context,
-                            "Orden creada #$orderId",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        // 2) Llamar al microservicio Pedidos+Pagos en segundo plano
-                        //Recordar el pedido funciona pero arroga error cuando paga, pero si sube el pedido a la base de datos.
                         scope.launch {
                             try {
-                                val dto = CrearPedidoPagoDTO(
-                                    usuarioId = "1",        // TODO: reemplazar por el id real del usuario logueado
-                                    direccionId = "1",      // TODO: id real de dirección
-                                    metodoPago = "WEB",
+                                val dto = CrearPedidoPagoDTO(    usuarioId = userId,
+                                    direccionId = "1",
+                                    metodoPago = "APP",
                                     total = totalPrice,
                                     items = itemsSnapshot.map { cartItem ->
                                         ItemPedidoDTO(
-                                            productoId = cartItem.product.id.toString(),
+                                            productoId = cartItem.product.id,
                                             nombreProducto = cartItem.product.name,
                                             cantidad = cartItem.quantity,
                                             precioUnitario = cartItem.product.price
@@ -128,33 +105,29 @@ fun CartScreen(
                                     }
                                 )
 
+
                                 val comprobante = RemoteModule.pedidoApi.pagar(dto)
 
-                                Toast.makeText(
-                                    context,
-                                    comprobante.mensaje,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                // Recién aquí, si el pago fue exitoso, creas la orden local y navegas.
+                                val orderId = OrderManager.createOrderFromCart()
+                                Toast.makeText(context, comprobante.mensaje, Toast.LENGTH_SHORT).show()
+                                onCheckout(orderId)
+
                             } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    "Error al registrar el pedido en el servidor",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "Error al procesar el pago: ${e.message}", Toast.LENGTH_LONG).show()
                             }
                         }
-
-                        // 3) Navegar al comprobante (usando la orden LOCAL)
-                        onCheckout(orderId)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Finalizar compra")
                 }
+                // --- FIN DEL CÓDIGO ACTUALIZADO ---
             }
         }
     }
 }
+
 
 @Composable
 private fun CartItemRow(

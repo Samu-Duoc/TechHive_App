@@ -8,6 +8,9 @@
         data object Login    : Route("login")  //Pantalla de Iniciar Sesión
         data object Register : Route("register")  //Pantalla de Registro
 
+        data object ChangePassword : Route("change_password") //Pantalla para recuperar contrseña
+
+
 
         //Rutas del Cliente en la app
         data object Inicio   : Route("inicio") // Inicio de app, con categorías y productos destacados

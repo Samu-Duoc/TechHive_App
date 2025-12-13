@@ -6,11 +6,13 @@ import com.example.techhive_app.data.local.storage.UserPreferences
 import com.example.techhive_app.data.remote.dto.auth.RegisterRequestDto
 import com.example.techhive_app.data.repository.UserRepository
 import com.example.techhive_app.domain.validation.*
-import kotlinx.coroutines.delay
+import com.example.techhive_app.data.remote.dto.auth.ChangePasswordDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.techhive_app.ui.util.normalizeRutForBackend
+import com.example.techhive_app.data.remote.dto.auth.UpdateProfileDto
 
 // ---------------- ESTADOS LOGIN / REGISTRO ----------------
 
@@ -60,6 +62,14 @@ data class ProfileUiState(
     val error: String? = null
 )
 
+//Estado de sessión
+data class Session(
+    val isLoggedIn: Boolean = false,
+    val userId: Long? = null,
+    val email: String? = null,
+    val role: String? = null
+)
+
 // ---------------- VIEWMODEL ----------------
 
 class AuthViewModel(
@@ -100,18 +110,29 @@ class AuthViewModel(
 
         viewModelScope.launch {
             _login.update { it.copy(isSubmitting = true, errorMsg = null, success = false) }
-            delay(500)
 
-            val result = repository.login(s.email.trim(), s.pass)
+            val email = s.email.trim()
+            val password = s.pass
 
-            _login.update {
-                if (result.isSuccess) {
-                    viewModelScope.launch {
-                        prefs.setLoggedIn(true)
-                        prefs.setUserEmail(s.email.trim())
-                    }
-                    it.copy(isSubmitting = false, success = true, errorMsg = null)
-                } else {
+            val result = repository.login(email, password)
+
+            if (result.isSuccess) {
+                // 1) guardar sesión básica
+                prefs.setLoggedIn(true)
+                prefs.setUserEmail(email)
+
+                // 2) traer perfil real (id + role + nombre + teléfono)
+                val profResult = repository.getUserProfileFromMs(email)
+                profResult.onSuccess { p ->
+                    prefs.setUserId(p.id)
+                    prefs.setRole(p.role)
+                    prefs.setUserName(p.fullName)
+                    prefs.setUserPhone(p.telefono)
+                }
+
+                _login.update { it.copy(isSubmitting = false, success = true, errorMsg = null) }
+            } else {
+                _login.update {
                     it.copy(
                         isSubmitting = false,
                         success = false,
@@ -121,6 +142,7 @@ class AuthViewModel(
             }
         }
     }
+
 
     fun clearLoginResult() {
         _login.update { it.copy(success = false, errorMsg = null) }
@@ -151,10 +173,14 @@ class AuthViewModel(
     }
 
     fun onRutChange(value: String) {
-        val filtered = value.filter { it.isDigit() || it.equals('k', ignoreCase = true) }.take(9)
+        val filtered = value
+            .filter { it.isDigit() || it.equals('k', true) || it == '.' || it == '-' }
+            .take(12)
+
         _register.update { it.copy(rut = filtered, rutError = validateRut(filtered)) }
         recomputeRegisterCanSubmit()
     }
+
 
     fun onRegisterEmailChange(value: String) {
         _register.update { it.copy(email = value, emailError = validateEmail(value)) }
@@ -242,10 +268,10 @@ class AuthViewModel(
             val body = RegisterRequestDto(
                 nombre = s.name.trim(),
                 apellido = s.apellido.trim(),
-                rut = s.rut.trim(),
+                rut = normalizeRutForBackend(s.rut),
+                telefono = s.phone.filter { it.isDigit() }.take(9),
                 email = s.email.trim(),
                 password = s.pass,
-                telefono = s.phone.trim(),
                 direccion = s.direccion.trim()
             )
 
@@ -298,6 +324,80 @@ class AuthViewModel(
             }
         }
     }
+
+    //Actulizar perfil
+    fun submitProfileUpdate(
+        userId: Long,
+        dto: UpdateProfileDto,
+        onOk: () -> Unit,
+        onFail: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _profile.update { it.copy(isLoading = true, error = null) }
+
+            val result = repository.updateProfile(userId, dto)
+
+            result.fold(
+                onSuccess = { updated ->
+                    prefs.setUserName("${updated.nombre} ${updated.apellido}")
+                    prefs.setUserPhone(updated.telefono)
+
+                    _profile.update {
+                        it.copy(
+                            name = "${updated.nombre} ${updated.apellido}",
+                            email = updated.email,
+                            rut = updated.rut,
+                            direccion = updated.direccion,
+                            phone = updated.telefono,
+                            isLoading = false,
+                            error = null
+                        )
+                    }
+                    onOk()
+                },
+                onFailure = { e ->
+                    val msg = e.message ?: "Error al actualizar perfil"
+                    _profile.update { it.copy(isLoading = false, error = msg) }
+                    onFail(msg)
+                }
+            )
+        }
+    }
+
+
+
+    //ACTULIZAR O RECUPARAR CONTRASEÑA
+    fun submitChangePassword(
+        userId: Long,
+        oldPass: String,
+        newPass: String,
+        onOk: () -> Unit,
+        onFail: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val err = validateStrongPassword(newPass)
+            if (err != null) {
+                _profile.update { it.copy(error = err) }
+                onFail(err)
+                return@launch
+            }
+
+            val result = repository.changePassword(
+                userId,
+                ChangePasswordDto(oldPassword = oldPass, newPassword = newPass)
+            )
+
+            if (result.isSuccess) {
+                _profile.update { it.copy(error = null) }
+                onOk()
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "No se pudo actualizar la contraseña"
+                _profile.update { it.copy(error = msg) }
+                onFail(msg)
+            }
+        }
+    }
+
 
     fun clearRegisterResult() {
         _register.update { it.copy(success = false, errorMsg = null) }

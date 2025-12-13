@@ -1,12 +1,12 @@
 package com.example.techhive_app.data.remote.dto.auth
-data class RegisterRequestDto(
+
+data class UpdateProfileDto(
     val nombre: String,
     val apellido: String,
     val rut: String,
-    val email: String,
-    val password: String,
     val telefono: String,
-    val direccion: String
+    val direccion: String,
+    val currentPassword: String
 )
 
-typealias UpdateUserDto = RegisterRequestDto
+

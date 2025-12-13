@@ -14,7 +14,7 @@ class ProductRepository(
     // ===== LISTAR TODOS =====
     fun getAllProducts(): Flow<List<ProductEntity>> = flow {
         val remoteList = api.getProductos()                // MS /productos
-        val entities = remoteList.map { it.toEntity() }    // 👈 USAS TU EXTENSION REAL
+        val entities = remoteList.map { it.toEntity() }    // USAS TU EXTENSION REAL
         emit(entities)
     }
 

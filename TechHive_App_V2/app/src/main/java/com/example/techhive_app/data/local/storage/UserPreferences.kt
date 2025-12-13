@@ -3,6 +3,7 @@ package com.example.techhive_app.data.local.storage
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,25 @@ class UserPreferences(private val context: Context) {
     private val userNameKey = stringPreferencesKey("user_name")
 
     private val userPhoneKey = stringPreferencesKey("user_phone")
+
+    //Roles
+   private val KEY_ROLE = stringPreferencesKey("role")
+   val role: Flow<String?> = context.dataStore.data.map { it [KEY_ROLE] }
+
+    suspend fun setRole(role: String) {
+        context.dataStore.edit { it[KEY_ROLE] = role }
+    }
+
+    private val USER_ID_KEY = longPreferencesKey("user_id")
+    val getUserId: Flow<Long?> = context.dataStore.data.map { preferences ->
+        preferences[USER_ID_KEY]
+    }
+
+    suspend fun setUserId(id: Long) {
+        context.dataStore.edit { it[USER_ID_KEY] = id }
+    }
+
+
 
     // Sesión del usuario
     val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { it[isLoggedInKey] ?: false }
@@ -62,8 +82,10 @@ class UserPreferences(private val context: Context) {
             it.remove(userPhotoUriKey)
             it.remove(userNameKey)
             it.remove(userPhoneKey)
+            it.remove(KEY_ROLE)
+            it.remove(USER_ID_KEY)
+
+
         }
     }
-
-
 }

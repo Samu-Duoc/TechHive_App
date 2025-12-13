@@ -28,9 +28,6 @@ fun LoginScreenVm(
 
     LaunchedEffect(state.success) {
         if (state.success) {
-            userPrefs.setLoggedIn(true)
-            userPrefs.setUserEmail(state.email)
-
             vm.clearLoginResult()
             onLoginOkNavigateHome()
         }

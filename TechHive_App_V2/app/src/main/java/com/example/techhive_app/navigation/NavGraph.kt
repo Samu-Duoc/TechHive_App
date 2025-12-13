@@ -22,6 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.techhive_app.data.local.storage.UserPreferences
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.techhive_app.ui.components.AppNavBar
@@ -45,6 +46,8 @@ import com.example.techhive_app.ui.screen.admin.ProductFormScreen
 import com.example.techhive_app.ui.screen.client.ContactFormScreen
 import com.example.techhive_app.ui.viewmodel.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.ProductViewModel
+import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
+import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
 
 
 import kotlinx.coroutines.CoroutineScope
@@ -79,6 +82,7 @@ fun AppNavGraph(
         }
     }
     val goProducts: () -> Unit = { navController.navigate(Route.ProductList.path) }
+
     val goToCart: () -> Unit = { navController.navigate(Route.Cart.path) }
     val goToProfile: () -> Unit = {
         if (isLoggedIn) navController.navigate(Route.ProfileMenu.path) else goLogin()
@@ -102,7 +106,9 @@ fun AppNavGraph(
         Route.AdminHome.path,
         Route.AdminProducts.path,
         Route.AdminAddProduct.path,
-        Route.AdminEditProduct.path
+        Route.AdminEditProduct.path,
+        Route.ChangePassword.path
+
     )
 
     // si es admin, NUNCA mostramos la barra del cliente
@@ -266,7 +272,11 @@ fun AppNavGraph(
 
             // ---------- CARRITO ----------
             composable(Route.Cart.path) {
+                // Leemos el userId desde las preferencias (puede ser null)
+                val userId by userPrefs.getUserId.collectAsState(initial = null)
+
                 CartScreen(
+                    userId = userId ?: 0L,
                     onCheckout = { orderId ->
                         if (orderId != -1L) {
                             navController.navigate(Route.OrderConfirmation.createRoute(orderId))
@@ -330,31 +340,45 @@ fun AppNavGraph(
             composable(Route.Profile.path) {
                 ProfileScreen(
                     authViewModel = authViewModel,
-                    onLoggedOut = { onLoggedOut() }
+                    onLoggedOut = { onLoggedOut() },
+                    onGoChangePassword = { navController.navigate(Route.ChangePassword.path) }
                 )
             }
+
+            composable(Route.ChangePassword.path) {
+                ChangePasswordScreen(
+                    authViewModel = authViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+
+
 
             // =============== RUTAS ADMIN =================
 
             // PANEL ADMIN
             composable(Route.AdminHome.path) {
-                AdminHomeScreen(
-                    onNavigateToProducts = {
-                        navController.navigate(Route.AdminProducts.path)
-                    },
-                    onNavigateToUsers = {
-                        navController.navigate(Route.AdminUsers.path)
-                    },
-                    onNavigateToOrders = {
-                        navController.navigate(Route.AdminOrders.path)
-                    },
-                    onNavigateToProfile = {
-                        navController.navigate(Route.Profile.path)
-                    },
-                    onAddProduct = {
-                        navController.navigate(Route.AdminAddProduct.path)
-                    }
-                )
+                val role by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
+                val isAdmin = role?.equals("ADMIN", ignoreCase = true) == true
+
+                if (!isAdmin) {
+                    UnauthorizedScreen(
+                        onGoHome = {
+                            navController.navigate(Route.Inicio.path) {
+                                popUpTo(Route.AdminHome.path) { inclusive = true }
+                            }
+                        }
+                    )
+                } else {
+                    AdminHomeScreen(
+                        onNavigateToProducts = { navController.navigate(Route.AdminProducts.path) },
+                        onNavigateToUsers = { navController.navigate(Route.AdminUsers.path) },
+                        onNavigateToOrders = { navController.navigate(Route.AdminOrders.path) },
+                        onNavigateToProfile = { navController.navigate(Route.Profile.path) },
+                        onAddProduct = { navController.navigate(Route.AdminAddProduct.path) }
+                    )
+                }
             }
 
             // GRID CRUD ADMIN

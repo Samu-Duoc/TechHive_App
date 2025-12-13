@@ -10,7 +10,7 @@ import retrofit2.http.POST
 
 interface PedidoApi {
 
-    @POST("/pedidos/pagar")
+    @POST("pedidos/pagar")
     suspend fun pagar(@Body data: CrearPedidoPagoDTO): ComprobantePagoDTO
 }
 

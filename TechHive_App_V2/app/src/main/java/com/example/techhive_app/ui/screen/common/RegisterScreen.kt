@@ -138,7 +138,7 @@ private fun RegisterScreen(
             if (apellidoError != null) { Text(apellidoError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall) }
 
             // ---CAMPO RUT ---
-            OutlinedTextField(value = rut, onValueChange = onRutChange, label = { Text("RUT (sin puntos ni guion)") }, isError = rutError != null, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = rut, onValueChange = onRutChange, label = { Text("RUT (con puntos y guion)") }, isError = rutError != null, singleLine = true, modifier = Modifier.fillMaxWidth())
             if (rutError != null) { Text(rutError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall) }
 
             // Email
@@ -175,6 +175,6 @@ private fun RegisterScreen(
         }
         if (errorMsg != null) { Spacer(Modifier.height(8.dp)); Text(errorMsg, color = MaterialTheme.colorScheme.error) }
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = onGoLogin, modifier = Modifier.fillMaxWidth()) { Text("Ir a Login") }
+        OutlinedButton(onClick = onGoLogin, modifier = Modifier.fillMaxWidth()) { Text("Ir a Inicio de Sesión") }
     }
 }

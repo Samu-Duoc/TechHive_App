@@ -20,11 +20,16 @@ fun validateNameLettersOnly(name: String, fieldName: String = "Nombre"): String?
 //Validación de Rut
 fun validateRut(rut: String): String? {
     if (rut.isBlank()) return "El RUT es obligatorio"
-    // Permite números y la letra 'k' o 'K' al final, opcionalmente.
-    val regex = Regex("^[0-9]{7,8}[0-9kK]?$")
-    if (!regex.matches(rut)) return "Formato de RUT inválido (sin puntos ni guion)"
+
+    val cleaned = rut.replace(".", "").replace("-", "").trim()
+
+    // 7 u 8 dígitos + dígito verificador (0-9 o K)
+    val regex = Regex("^[0-9]{7,8}[0-9kK]$")
+    if (!regex.matches(cleaned)) return "Formato de RUT inválido"
+
     return null
 }
+
 
 
 //Validación de Dirección
@@ -38,7 +43,7 @@ fun validateAddress(address: String): String? {
 fun validatePhoneDigitsOnly(phone: String): String? {                  // Valida teléfono
     if (phone.isBlank()) return "El teléfono es obligatorio"           // Regla 1: no vacío
     if (!phone.all { it.isDigit() }) return "Solo números"             // Regla 2: todos dígitos
-    if (phone.length !in 8..15) return "Debe tener entre 8 y 15 dígitos" // Regla 3: tamaño razonable
+    if (phone.length != 9) return "Debe tener 9 dígitos" // Regla 3: tamaño razonable
     return null                                                        // OK
 }
 
