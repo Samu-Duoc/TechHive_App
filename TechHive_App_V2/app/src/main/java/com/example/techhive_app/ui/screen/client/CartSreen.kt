@@ -37,7 +37,7 @@ fun CartScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My cart") }
+                title = { Text("Mi carrito") }
             )
         }
     ) { padding ->
@@ -64,6 +64,7 @@ fun CartScreen(
                             Cart.increaseQuantity(item.product.id)
                         },
                         onDecrease = {
+                            Cart.decreaseQuantity(item.product.id)
                             Cart.decreaseQuantity(item.product.id)
                         },
                         onRemove = { Cart.removeItem(item.product.id) }
@@ -93,7 +94,7 @@ fun CartScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Checkout")
+                        Text("Ir a Pagar")
                     }
                 }
             }
