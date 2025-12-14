@@ -5,34 +5,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.techhive_app.data.remote.dto.Pedido.PedidoDTO
 import com.example.techhive_app.ui.viewmodel.admin.AdminOrdersViewModel
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminOrdersScreen(
-    viewModel: AdminOrdersViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: AdminOrdersViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onOpenOrderDetails: (String) -> Unit = {}
 ) {
-    // estados disponibles para filtrar
-    val estadosDisponibles = listOf("CONFIRMADO", "PREPARANDO", "ENTRANSITO", "ENTREGADO", "CANCELADO")
+    // ✅ FIX: sin espacio en "EN TRANSITO"
+    val estadosDisponibles = listOf("CONFIRMADO", "PREPARANDO", "EN TRANSITO", "ENTREGADO", "CANCELADO")
 
     var selectedFilters by remember { mutableStateOf(setOf<String>()) }
     var showOnlyNuevos by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.cargarPedidos()
-    }
+    LaunchedEffect(Unit) { viewModel.cargarPedidos() }
 
-    // lista a mostrar según filtros
     val ordersToShow = remember(viewModel.orders, selectedFilters, showOnlyNuevos) {
         val base = viewModel.orders
         when {
@@ -43,9 +38,8 @@ fun AdminOrdersScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Ordenes") }) }
+        topBar = { TopAppBar(title = { Text("Órdenes") }) }
     ) { padding ->
-
         Column(
             Modifier
                 .padding(padding)
@@ -55,7 +49,7 @@ fun AdminOrdersScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // Row con botones Todos / Nuevos
+            // --- Botones rápidos ---
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -68,9 +62,7 @@ fun AdminOrdersScreen(
                         viewModel.cargarPedidos()
                     },
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Todos")
-                }
+                ) { Text("Todos") }
 
                 OutlinedButton(
                     onClick = {
@@ -78,14 +70,12 @@ fun AdminOrdersScreen(
                         showOnlyNuevos = true
                     },
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Nuevos")
-                }
+                ) { Text("Nuevos") }
             }
 
             Spacer(Modifier.height(10.dp))
 
-            // Filtros por estado como chips (arriba) - fila scrollable horizontal
+            // --- Chips filtros ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,9 +118,7 @@ fun AdminOrdersScreen(
                 items(ordersToShow) { pedido ->
                     AdminOrderCard(
                         pedido = pedido,
-                        onChangeEstado = { estado ->
-                            viewModel.cambiarEstado(pedido.pedidoId, estado)
-                        }
+                        onVerDetalle = { onOpenOrderDetails(pedido.pedidoId) }
                     )
                 }
             }
@@ -141,11 +129,8 @@ fun AdminOrdersScreen(
 @Composable
 private fun AdminOrderCard(
     pedido: PedidoDTO,
-    onChangeEstado: (String) -> Unit
+    onVerDetalle: () -> Unit
 ) {
-    val estados = listOf("CONFIRMADO", "PREPARANDO", "EN_TRANSITO", "ENTREGADO", "CANCELADO")
-    var expanded by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -157,36 +142,16 @@ private fun AdminOrderCard(
             Text("Usuario: ${pedido.usuarioId}")
             Text("Total: $${pedido.total}")
             Text("Fecha: ${pedido.fecha}")
-            Text("Estado actual: ${pedido.estado}")
+            Text("Estado: ${pedido.estado}")
 
             Spacer(Modifier.height(10.dp))
 
-            // botón pequeño para abrir menu de cambio de estado
-            Row {
-                TextButton(
-                    onClick = { expanded = true }
-                ) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Cambiar")
-                    Spacer(Modifier.width(6.dp))
-                    Text("Cambiar")
-                }
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+            OutlinedButton(
+                onClick = onVerDetalle,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                estados.forEach { estado ->
-                    DropdownMenuItem(
-                        text = { Text(estado) },
-                        onClick = {
-                            expanded = false
-                            onChangeEstado(estado)
-                        }
-                    )
-                }
+                Text("Ver detalle")
             }
-
         }
     }
 }

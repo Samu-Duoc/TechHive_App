@@ -9,10 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -21,39 +25,33 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.techhive_app.data.local.storage.UserPreferences
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.example.techhive_app.ui.components.AppNavBar
-import com.example.techhive_app.ui.screen.client.AddressScreen
+import com.example.techhive_app.ui.screen.admin.AdminHomeScreen
+import com.example.techhive_app.ui.screen.admin.AdminOrdersScreen
+import com.example.techhive_app.ui.screen.admin.AdminProductGridScreen
+import com.example.techhive_app.ui.screen.admin.ProductFormScreen
 import com.example.techhive_app.ui.screen.client.CartScreen
-import com.example.techhive_app.ui.screen.client.OrderConfirmationScreen
+import com.example.techhive_app.ui.screen.client.CheckoutScreen
+import com.example.techhive_app.ui.screen.client.ContactFormScreen
 import com.example.techhive_app.ui.screen.client.MyOrdersScreen
+import com.example.techhive_app.ui.screen.client.OrderConfirmationScreen
 import com.example.techhive_app.ui.screen.client.ProductDetailScreen
 import com.example.techhive_app.ui.screen.client.ProductGridScreen
+import com.example.techhive_app.ui.screen.client.TicketScreen
+import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
 import com.example.techhive_app.ui.screen.common.HomeScreen
 import com.example.techhive_app.ui.screen.common.InicioScreen
 import com.example.techhive_app.ui.screen.common.LoginScreenVm
 import com.example.techhive_app.ui.screen.common.ProfileMenuScreen
 import com.example.techhive_app.ui.screen.common.ProfileScreen
 import com.example.techhive_app.ui.screen.common.RegisterScreenVm
-import com.example.techhive_app.ui.screen.common.SplashScreen
 import com.example.techhive_app.ui.screen.common.SplashDecisionScreen
-import com.example.techhive_app.ui.screen.admin.AdminHomeScreen
-import com.example.techhive_app.ui.screen.admin.AdminProductGridScreen
-import com.example.techhive_app.ui.screen.admin.ProductFormScreen
-import com.example.techhive_app.ui.screen.client.ContactFormScreen
+import com.example.techhive_app.ui.screen.common.SplashScreen
+import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
+import com.example.techhive_app.ui.screen.common.OrderDetailsScreen
 import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
-import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
-import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
-import com.example.techhive_app.ui.screen.client.CheckoutScreen
-import com.example.techhive_app.ui.screen.client.TicketScreen
-import com.example.techhive_app.ui.screen.admin.AdminOrdersScreen
-
-
-
+import com.example.techhive_app.ui.viewmodel.common.OrderViewerMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,10 +65,13 @@ fun AppNavGraph(
     // --- Estado de sesión ---
     val context = LocalContext.current
     val userPrefs = remember { UserPreferences(context) }
+
     val isLoggedIn by userPrefs.isLoggedIn.collectAsStateWithLifecycle(initialValue = false)
     val userEmail by userPrefs.userEmail.collectAsStateWithLifecycle(initialValue = null)
 
-    val isAdminUser = userEmail == "admin@techhive.cl"
+    val role by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
+    val isAdminUser = role?.equals("ADMIN", ignoreCase = true) == true
+
 
     // --- Navegaciones comunes ---
     val goHome: () -> Unit = {
@@ -86,7 +87,6 @@ fun AppNavGraph(
         }
     }
     val goProducts: () -> Unit = { navController.navigate(Route.ProductList.path) }
-
     val goToCart: () -> Unit = { navController.navigate(Route.Cart.path) }
     val goToProfile: () -> Unit = {
         if (isLoggedIn) navController.navigate(Route.ProfileMenu.path) else goLogin()
@@ -97,7 +97,7 @@ fun AppNavGraph(
         goHome()
     }
 
-    // --- Rutas donde NO va barra de cliente (splash, auth, admin, etc.) ---
+    // --- Rutas donde NO va barra de cliente ---
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -115,8 +115,7 @@ fun AppNavGraph(
         Route.ChangePassword.path
     )
 
-
-    // si es admin, NUNCA mostramos la barra del cliente
+    // Si es admin, NUNCA mostramos la barra del cliente
     val showClientBar = !isAdminUser && currentRoute !in hideClientBarRoutes
 
     Scaffold(
@@ -136,10 +135,10 @@ fun AppNavGraph(
             }
         }
     ) { innerPadding ->
-        // ============ NAVHOST ÚNICO ============
+
         NavHost(
             navController = navController,
-            startDestination = Route.Splash.path,   // SIEMPRE arranca en Splash
+            startDestination = Route.Splash.path,
             modifier = Modifier.padding(innerPadding)
         ) {
 
@@ -149,8 +148,7 @@ fun AppNavGraph(
                     onTimeout = {
                         if (isLoggedIn) {
                             val destination =
-                                if (isAdminUser) Route.AdminHome.path
-                                else Route.Inicio.path
+                                if (isAdminUser) Route.AdminHome.path else Route.Inicio.path
 
                             navController.navigate(destination) {
                                 popUpTo(Route.Splash.path) { inclusive = true }
@@ -178,9 +176,7 @@ fun AppNavGraph(
                     vm = authViewModel,
                     onLoginOkNavigateHome = {
                         val email = authViewModel.login.value.email
-                        navController.navigate(
-                            Route.SplashDecision.createRoute(email)
-                        ) {
+                        navController.navigate(Route.SplashDecision.createRoute(email)) {
                             popUpTo(Route.Home.path) { inclusive = true }
                         }
                     },
@@ -212,7 +208,6 @@ fun AppNavGraph(
             // ---------- INICIO CLIENTE ----------
             composable(Route.Inicio.path) {
                 if (isAdminUser) {
-                    // Si por alguna razón el admin llega aquí, lo mandamos al panel admin
                     LaunchedEffect(Unit) {
                         navController.navigate(Route.AdminHome.path) {
                             popUpTo(Route.AdminHome.path) { inclusive = true }
@@ -222,22 +217,18 @@ fun AppNavGraph(
                     InicioScreen(
                         productViewModel = productViewModel,
                         onCategoryClick = { categoryName ->
-                            navController.navigate(
-                                Route.ProductListByCategory.createRoute(categoryName)
-                            )
+                            navController.navigate(Route.ProductListByCategory.createRoute(categoryName))
                         },
                         onViewAllProducts = { goProducts() },
                         onProductClick = { id: Long ->
                             navController.navigate(Route.ProductDetail.createRoute(id))
                         },
-                        onContactClick = {
-                            navController.navigate(Route.Contact.path)
-                        }
+                        onContactClick = { navController.navigate(Route.Contact.path) }
                     )
                 }
             }
 
-            // ---------- LISTA DE PRODUCTOS (GRID GENERAL) ----------
+            // ---------- LISTA DE PRODUCTOS ----------
             composable(Route.ProductList.path) {
                 ProductGridScreen(
                     productViewModel = productViewModel,
@@ -285,7 +276,30 @@ fun AppNavGraph(
                 )
             }
 
-            //  ---------- COMPROBANTE (ORDEN) ahora pedidoId String ----------
+            // ---------- CHECKOUT ----------
+            composable(Route.Checkout.path) {
+                val userId by userPrefs.getUserId.collectAsState(initial = null)
+
+                CheckoutScreen(
+                    userId = userId ?: 0L,
+                    onBack = { navController.popBackStack() },
+                    onPaidNavigateTicket = { navController.navigate(Route.Ticket.path) }
+                )
+            }
+
+            // ---------- TICKET ----------
+            composable(Route.Ticket.path) {
+                TicketScreen(
+                    onGoHome = {
+                        navController.navigate(Route.Inicio.path) {
+                            popUpTo(Route.Inicio.path) { inclusive = true }
+                        }
+                    },
+                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
+                )
+            }
+
+            // ---------- COMPROBANTE (ORDEN) ----------
             composable(
                 route = Route.OrderConfirmation.path,
                 arguments = listOf(navArgument("pedidoId") { type = NavType.StringType })
@@ -305,40 +319,62 @@ fun AppNavGraph(
 
             // ---------- HISTORIAL CLIENTE ----------
             composable(Route.OrderHistory.path) {
-
                 val userId by userPrefs.getUserId.collectAsState(initial = null)
 
-                MyOrdersScreen(
-                    usuarioId = userId ?: 0L,
-                    onOpenOrderDetails = { pedidoId ->
-                        navController.navigate(Route.OrderConfirmation.createRoute(pedidoId))
+                if (userId == null || userId == 0L) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Debes iniciar sesión para ver tus órdenes.",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text("Vuelve a iniciar sesión e inténtalo otra vez.")
                     }
-                )
+                } else {
+                    MyOrdersScreen(
+                        usuarioId = userId!!,
+                        onOpenOrderDetails = { pedidoId ->
+                            // YA NO ESTÁ VACÍO: NAVEGA AL DETALLE
+                            navController.navigate(
+                                Route.OrderDetails.createRoute(pedidoId, "client")
+                            )
+                        }
+                    )
+                }
             }
 
+            // ---------- ORDER DETAILS (CLIENT / ADMIN) ----------
+            composable(
+                route = Route.OrderDetails.path,
+                arguments = listOf(
+                    navArgument("pedidoId") { type = NavType.StringType },
+                    navArgument("mode") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
+                val modeArg = backStackEntry.arguments?.getString("mode") ?: "client"
 
-
-
+                OrderDetailsScreen(
+                    pedidoId = pedidoId,
+                    mode = if (modeArg.equals("admin", ignoreCase = true))
+                        OrderViewerMode.ADMIN
+                    else
+                        OrderViewerMode.CLIENT,
+                    onBack = { navController.popBackStack() }
+                )
+            }
 
             // ---------- MENÚ PERFIL ----------
             composable(Route.ProfileMenu.path) {
                 ProfileMenuScreen(
                     onEditProfile = { navController.navigate(Route.Profile.path) },
-                    onAddress = { navController.navigate(Route.Address.path) },
                     onHistory = { navController.navigate(Route.OrderHistory.path) },
                     onLogout = { onLoggedOut() }
-                )
-            }
-
-            // ---------- DIRECCIÓN ----------
-            composable(Route.Address.path) {
-                AddressScreen(onBack = { navController.popBackStack() })
-            }
-
-            // ---------- CONTACTO ----------
-            composable(Route.Contact.path) {
-                ContactFormScreen(
-                    onBack = { navController.popBackStack() }
                 )
             }
 
@@ -358,10 +394,12 @@ fun AppNavGraph(
                 )
             }
 
+            // ---------- CONTACTO ----------
+            composable(Route.Contact.path) {
+                ContactFormScreen(onBack = { navController.popBackStack() })
+            }
 
-
-
-            // =============== RUTAS ADMIN =================
+            // ================= ADMIN =================
 
             // PANEL ADMIN
             composable(Route.AdminHome.path) {
@@ -394,12 +432,9 @@ fun AppNavGraph(
                     onEditProduct = { id ->
                         navController.navigate(Route.AdminEditProduct.createRoute(id))
                     },
-                    onAddProduct = {
-                        navController.navigate(Route.AdminAddProduct.path)
-                    }
+                    onAddProduct = { navController.navigate(Route.AdminAddProduct.path) }
                 )
             }
-
 
             // NUEVO PRODUCTO (ADMIN)
             composable(Route.AdminAddProduct.path) {
@@ -409,8 +444,6 @@ fun AppNavGraph(
                     onFinished = { navController.popBackStack() }
                 )
             }
-
-
 
             // EDITAR PRODUCTO (ADMIN)
             composable(
@@ -427,10 +460,15 @@ fun AppNavGraph(
 
             // LISTADO DE PEDIDOS PARA ADMIN
             composable(Route.AdminOrders.path) {
-                AdminOrdersScreen()
+                AdminOrdersScreen(
+                    onOpenOrderDetails = { pedidoId ->
+                        // AHORA SÍ NAVEGA (ANTES ESTABA VACÍO)
+                        navController.navigate(
+                            Route.OrderDetails.createRoute(pedidoId, "admin")
+                        )
+                    }
+                )
             }
-
-
 
             // USUARIOS ADMIN (placeholder)
             composable(Route.AdminUsers.path) {
@@ -452,37 +490,11 @@ fun AppNavGraph(
             // MENSAJES ADMIN (CONTACTO)
             composable(Route.AdminMessages.path) {
                 val vm = remember { com.example.techhive_app.ui.viewmodel.admin.AdminContactViewModel() }
-
                 com.example.techhive_app.ui.screen.admin.AdminMessagesScreen(
                     viewModel = vm,
                     onBack = { navController.popBackStack() }
                 )
             }
-
-            // CHECKOUT
-            composable(Route.Checkout.path) {
-                val userId by userPrefs.getUserId.collectAsState(initial = null)
-
-                CheckoutScreen(
-                    userId = userId ?: 0L,
-                    onBack = { navController.popBackStack() },
-                    onPaidNavigateTicket = { navController.navigate(Route.Ticket.path) }
-                )
-            }
-
-            // TICKET
-            composable(Route.Ticket.path) {
-                TicketScreen(
-                    onGoHome = {
-                        navController.navigate(Route.Inicio.path) {
-                            popUpTo(Route.Inicio.path) { inclusive = true }
-                        }
-                    },
-                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
-                )
-            }
-
-
         }
     }
 }

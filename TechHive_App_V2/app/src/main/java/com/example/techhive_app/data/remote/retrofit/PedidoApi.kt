@@ -4,6 +4,7 @@ import com.example.techhive_app.data.remote.dto.Pedido.ComprobantePagoDTO
 import com.example.techhive_app.data.remote.dto.Pedido.CrearPedidoPagoDTO
 import com.example.techhive_app.data.remote.dto.Pedido.PedidoDTO
 import com.example.techhive_app.data.remote.dto.Pedido.ActualizarEstadoPedidoDTO
+import com.example.techhive_app.data.remote.dto.Pedido.PedidoDetalleDTO
 import retrofit2.http.*
 
 
@@ -26,6 +27,9 @@ interface PedidoApi {
         @Path("pedidoId") pedidoId: String,
         @Body body: ActualizarEstadoPedidoDTO
     ): PedidoDTO
+
+    @GET("pedidos/{pedidoId}/detalle")
+    suspend fun getDetalle(@Path("pedidoId") pedidoId: String): PedidoDetalleDTO
 
 }
 

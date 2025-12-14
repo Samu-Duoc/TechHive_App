@@ -26,16 +26,14 @@ fun MyOrdersScreen(
     }
 
     val upcoming = remember(viewModel.orders) {
-        viewModel.orders.filter { it.estado.uppercase() in listOf("CONFIRMADO", "PREPARANDO", "EN_TRANSITO") }
+        viewModel.orders.filter { it.estado.uppercase() in listOf("PAGADO", "CONFIRMADO", "PREPARANDO", "ENTRANSITO", "EN_TRANSITO") }
     }
     val previous = remember(viewModel.orders) {
         viewModel.orders.filter { it.estado.uppercase() in listOf("ENTREGADO", "CANCELADO") }
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("My Orders") })
-        }
+        topBar = { TopAppBar(title = { Text("Mis órdenes") }) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -47,12 +45,12 @@ fun MyOrdersScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Upcoming (${upcoming.size})") }
+                    text = { Text("En curso (${upcoming.size})") }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Previous (${previous.size})") }
+                    text = { Text("Finalizadas (${previous.size})") }
                 )
             }
 
@@ -65,7 +63,9 @@ fun MyOrdersScreen(
 
                 viewModel.errorMessage != null -> {
                     Column(
-                        Modifier.fillMaxSize().padding(16.dp),
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -91,7 +91,7 @@ fun MyOrdersScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(list) { pedido ->
-                                OrderCard(
+                                ClientOrderCard(
                                     pedido = pedido,
                                     onDetails = { onOpenOrderDetails(pedido.pedidoId) }
                                 )
@@ -105,7 +105,7 @@ fun MyOrdersScreen(
 }
 
 @Composable
-private fun OrderCard(
+private fun ClientOrderCard(
     pedido: PedidoDTO,
     onDetails: () -> Unit
 ) {
@@ -118,7 +118,7 @@ private fun OrderCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text(
-                        text = "Order Nº ${pedido.pedidoId.take(8)}",
+                        text = "Orden Nº ${pedido.pedidoId.take(8)}",
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(2.dp))
@@ -126,12 +126,11 @@ private fun OrderCard(
                 }
 
                 Button(onClick = onDetails) {
-                    Text("Order Details")
+                    Text("Ver detalle")
                 }
             }
 
             Spacer(Modifier.height(10.dp))
-
             Text("Total: $${pedido.total}")
             Text("Fecha: ${pedido.fecha}")
         }

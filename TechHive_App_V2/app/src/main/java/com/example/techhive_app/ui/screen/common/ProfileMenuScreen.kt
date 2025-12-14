@@ -3,7 +3,9 @@ package com.example.techhive_app.ui.screen.common
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PublishedWithChanges
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,10 +17,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ProfileMenuScreen(
     onEditProfile: () -> Unit,
-    onAddress: () -> Unit,
     onHistory: () -> Unit,
     onLogout: () -> Unit,
-    historyLabel: String = "Mi Ordenes"
+    historyLabel: String = "Mis órdenes"
 ) {
     Scaffold(
         topBar = {
@@ -42,13 +43,7 @@ fun ProfileMenuScreen(
             )
 
             ProfileMenuItem(
-                icon = Icons.Default.Home,
-                label = "Dirección",
-                onClick = onAddress
-            )
-
-            ProfileMenuItem(
-                icon = Icons.Default.History,
+                icon = Icons.Default.PublishedWithChanges,
                 label = historyLabel,
                 onClick = onHistory
             )
@@ -72,7 +67,7 @@ fun ProfileMenuItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier

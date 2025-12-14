@@ -61,7 +61,7 @@ fun TicketScreen(
         Spacer(Modifier.height(8.dp))
 
         OutlinedButton(onClick = onGoHistory, modifier = Modifier.fillMaxWidth()) {
-            Text("Ver historial")
+            Text("Ver Order")
         }
     }
 }

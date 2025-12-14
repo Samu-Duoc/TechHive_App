@@ -82,13 +82,21 @@ fun ProfileScreen(
     // poblar editables cuando llega perfil
     LaunchedEffect(profileState.isLoading, profileState.error) {
         if (!profileState.isLoading && profileState.error == null) {
-            val parts = profileState.name.trim().split(" ")
+            val parts = profileState.name.trim().split(Regex("\\s+"))
             editNombre = parts.firstOrNull().orEmpty()
             editApellido = parts.drop(1).joinToString(" ")
             editRut = profileState.rut
             editDireccion = profileState.direccion
             editTelefono = profileState.phone
         }
+    }
+
+    // mostrar nombre y apellido derivados cuando no estás en edición
+    val displayNombre = remember(profileState.name) {
+        profileState.name.trim().split(Regex("\\s+")).firstOrNull().orEmpty()
+    }
+    val displayApellido = remember(profileState.name) {
+        profileState.name.trim().split(Regex("\\s+")).drop(1).joinToString(" ")
     }
 
     // cámara
@@ -162,21 +170,22 @@ fun ProfileScreen(
         }
 
         OutlinedTextField(
-            value = if (isEditing) editNombre else profileState.name,
+            value = if (isEditing) editNombre else displayNombre,
             onValueChange = { if (isEditing) editNombre = it },
             readOnly = !isEditing,
             label = { Text("Nombre") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { if (!isEditing && displayNombre.isBlank()) Text("—") }
         )
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = if (isEditing) editApellido else "",
+            value = if (isEditing) editApellido else displayApellido,
             onValueChange = { if (isEditing) editApellido = it },
             readOnly = !isEditing,
             label = { Text("Apellido") },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { if (!isEditing) Text("—") }
+            placeholder = { if (!isEditing && displayApellido.isBlank()) Text("—") }
         )
         Spacer(Modifier.height(8.dp))
 

@@ -23,13 +23,6 @@ import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 
-
-
-
-
-
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductFormScreen(
@@ -194,13 +187,6 @@ fun ProductFormScreen(
                             }
                         )
                     }
-
-                    DropdownMenuItem(
-                        text = { Text("Nueva categoría… (pendiente)") },
-                        onClick = {
-                            isCategoryMenuExpanded = false
-                        }
-                    )
                 }
             }
 
