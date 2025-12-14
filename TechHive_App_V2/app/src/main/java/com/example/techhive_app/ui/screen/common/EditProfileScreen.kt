@@ -39,15 +39,17 @@ fun EditProfileScreen(
         if (!e.isNullOrBlank()) authViewModel.loadProfile(e)
     }
 
-    // Poblar campos una vez que llega el perfil
-    LaunchedEffect(profile.name, profile.rut, profile.phone, profile.direccion) {
+    // Poblar campos una vez que llega el perfil, sólo si los campos locales están vacíos
+    LaunchedEffect(profile) {
         if (!profile.isLoading && profile.error == null) {
-            val parts = profile.name.trim().split(" ")
-            nombre = parts.firstOrNull().orEmpty()
-            apellido = parts.drop(1).joinToString(" ").trim()
-            rut = profile.rut
-            telefono = profile.phone
-            direccion = profile.direccion
+            if (nombre.isBlank() && apellido.isBlank() && rut.isBlank() && telefono.isBlank() && direccion.isBlank()) {
+                val parts = profile.name.trim().split(Regex("\\s+"))
+                nombre = parts.firstOrNull().orEmpty()
+                apellido = parts.drop(1).joinToString(" ").trim()
+                rut = profile.rut
+                telefono = profile.phone
+                direccion = profile.direccion
+            }
         }
     }
 
