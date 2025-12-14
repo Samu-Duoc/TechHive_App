@@ -19,6 +19,8 @@ sealed class Route(val path: String) {
         fun createRoute(productId: Long) = "products/$productId"
     }
 
+    data object EditProfile : Route("edit_profile")
+
     // Comprobante
     data object OrderConfirmation : Route("order_confirmation/{pedidoId}") {
         fun createRoute(pedidoId: String) = "order_confirmation/$pedidoId"

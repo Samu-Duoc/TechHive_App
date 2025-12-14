@@ -20,16 +20,11 @@ fun validateNameLettersOnly(name: String, fieldName: String = "Nombre"): String?
 //Validación de Rut
 fun validateRut(rut: String): String? {
     if (rut.isBlank()) return "El RUT es obligatorio"
-
     val cleaned = rut.replace(".", "").replace("-", "").trim()
-
-    // 7 u 8 dígitos + dígito verificador (0-9 o K)
     val regex = Regex("^[0-9]{7,8}[0-9kK]$")
     if (!regex.matches(cleaned)) return "Formato de RUT inválido"
-
     return null
 }
-
 
 
 //Validación de Dirección

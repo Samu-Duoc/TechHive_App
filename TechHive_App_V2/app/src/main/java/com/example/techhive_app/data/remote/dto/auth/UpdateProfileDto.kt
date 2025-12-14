@@ -5,8 +5,7 @@ data class UpdateProfileDto(
     val apellido: String,
     val rut: String,
     val telefono: String,
-    val direccion: String,
-    val currentPassword: String
+    val direccion: String
 )
 
 

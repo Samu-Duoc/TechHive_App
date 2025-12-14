@@ -6,6 +6,8 @@ import com.example.techhive_app.data.remote.dto.auth.RegisterRequestDto
 import com.example.techhive_app.data.remote.dto.auth.UsuarioDTO
 import com.example.techhive_app.data.remote.dto.auth.ChangePasswordDto
 import com.example.techhive_app.data.remote.dto.auth.UpdateProfileDto
+import com.example.techhive_app.data.remote.dto.auth.RecoverPasswordSecureDto
+import com.example.techhive_app.data.remote.dto.auth.SetSecurityQADto
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.GET
@@ -47,5 +49,12 @@ interface AuthApi {
         @Body dto: ChangePasswordDto
     ): String
 
+    @PUT("usuarios/{id}/security")
+    suspend fun setSecurity(@Path("id") id: Long, @Body dto: SetSecurityQADto): String
+
+    @POST("auth/recuperar-clave-segura")
+    suspend fun recoverPasswordSecure(
+        @Body dto: RecoverPasswordSecureDto
+    ): String
 
 }

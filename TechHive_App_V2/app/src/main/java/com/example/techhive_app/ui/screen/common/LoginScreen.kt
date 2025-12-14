@@ -10,7 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.techhive_app.data.local.storage.UserPreferences
@@ -20,7 +22,8 @@ import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
 fun LoginScreenVm(
     vm: AuthViewModel,
     onLoginOkNavigateHome: () -> Unit,
-    onGoRegister: () -> Unit
+    onGoRegister: () -> Unit,
+    onForgotPassword: () -> Unit
 ) {
     val state by vm.login.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -44,10 +47,10 @@ fun LoginScreenVm(
         onEmailChange = vm::onLoginEmailChange,
         onPassChange = vm::onLoginPassChange,
         onSubmit = vm::submitLogin,
-        onGoRegister = onGoRegister
+        onGoRegister = onGoRegister,
+        onForgotPassword = onForgotPassword
     )
 }
-
 
 @Composable
 private fun LoginScreen(
@@ -61,9 +64,9 @@ private fun LoginScreen(
     onEmailChange: (String) -> Unit,
     onPassChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    onGoRegister: () -> Unit
+    onGoRegister: () -> Unit,
+    onForgotPassword: () -> Unit
 ) {
-//    val bg = MaterialTheme.colorScheme.secondaryContainer
     var showPass by remember { mutableStateOf(false) }
 
     Box(
@@ -92,7 +95,11 @@ private fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             if (emailError != null) {
-                Text(emailError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    emailError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -115,10 +122,23 @@ private fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             if (passError != null) {
-                Text(passError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    passError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
 
-            Spacer(Modifier.height(16.dp))
+            //Olvidaste tu contraseña
+            Spacer(Modifier.height(6.dp))
+            TextButton(
+                onClick = onForgotPassword,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("¿Olvidaste tu contraseña?")
+            }
+
+            Spacer(Modifier.height(10.dp))
 
             Button(
                 onClick = onSubmit,

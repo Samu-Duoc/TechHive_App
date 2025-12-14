@@ -4,15 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techhive_app.data.local.storage.UserPreferences
 import com.example.techhive_app.data.remote.dto.auth.RegisterRequestDto
+import com.example.techhive_app.data.remote.dto.auth.ChangePasswordDto
+import com.example.techhive_app.data.remote.dto.auth.UpdateProfileDto
 import com.example.techhive_app.data.repository.UserRepository
 import com.example.techhive_app.domain.validation.*
-import com.example.techhive_app.data.remote.dto.auth.ChangePasswordDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.example.techhive_app.ui.util.normalizeRutForBackend
-import com.example.techhive_app.data.remote.dto.auth.UpdateProfileDto
+import com.example.techhive_app.data.remote.dto.auth.RecoverPasswordSecureDto
+import com.example.techhive_app.data.repository.AuthRemoteRepository
 
 // ---------------- ESTADOS LOGIN / REGISTRO ----------------
 
@@ -398,6 +400,37 @@ class AuthViewModel(
         }
     }
 
+    // Recuperar contraseña segura (agregado)
+
+    fun submitRecoverPasswordSecure(
+        email: String,
+        answer: String,
+        newPass: String,
+        onOk: () -> Unit,
+        onFail: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val err = validateStrongPassword(newPass)
+            if (err != null) {
+                onFail(err)
+                return@launch
+            }
+
+            val result = repository.recoverPasswordSecure(
+                RecoverPasswordSecureDto(
+                    email = email.trim(),
+                    respuesta = answer.trim(),
+                    nuevaPassword = newPass
+                )
+            )
+
+            if (result.isSuccess) {
+                onOk()
+            } else {
+                onFail(result.exceptionOrNull()?.message ?: "No se pudo recuperar la contraseña")
+            }
+        }
+    }
 
     fun clearRegisterResult() {
         _register.update { it.copy(success = false, errorMsg = null) }

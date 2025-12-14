@@ -5,6 +5,7 @@ import com.example.techhive_app.data.remote.dto.auth.LoginResponseDto
 import com.example.techhive_app.data.remote.dto.auth.RegisterRequestDto
 import com.example.techhive_app.data.remote.dto.auth.UsuarioDTO
 import com.example.techhive_app.data.remote.retrofit.AuthApi
+
 class AuthRemoteRepository(
     private val api: AuthApi
 ) {

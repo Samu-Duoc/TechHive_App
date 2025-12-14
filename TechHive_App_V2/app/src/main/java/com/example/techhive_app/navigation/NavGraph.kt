@@ -10,7 +10,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -38,7 +37,6 @@ import com.example.techhive_app.ui.screen.client.OrderConfirmationScreen
 import com.example.techhive_app.ui.screen.client.ProductDetailScreen
 import com.example.techhive_app.ui.screen.client.ProductGridScreen
 import com.example.techhive_app.ui.screen.client.TicketScreen
-import com.example.techhive_app.ui.screen.common.ChangePasswordScreen
 import com.example.techhive_app.ui.screen.common.HomeScreen
 import com.example.techhive_app.ui.screen.common.InicioScreen
 import com.example.techhive_app.ui.screen.common.LoginScreenVm
@@ -49,6 +47,8 @@ import com.example.techhive_app.ui.screen.common.SplashDecisionScreen
 import com.example.techhive_app.ui.screen.common.SplashScreen
 import com.example.techhive_app.ui.screen.common.UnauthorizedScreen
 import com.example.techhive_app.ui.screen.common.OrderDetailsScreen
+import com.example.techhive_app.ui.screen.common.RecoverPasswordScreen
+import com.example.techhive_app.ui.screen.common.EditProfileScreen
 import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
 import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 import com.example.techhive_app.ui.viewmodel.common.OrderViewerMode
@@ -71,7 +71,6 @@ fun AppNavGraph(
 
     val role by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
     val isAdminUser = role?.equals("ADMIN", ignoreCase = true) == true
-
 
     // --- Navegaciones comunes ---
     val goHome: () -> Unit = {
@@ -112,7 +111,8 @@ fun AppNavGraph(
         Route.AdminAddProduct.path,
         Route.AdminEditProduct.path,
         Route.AdminMessages.path,
-        Route.ChangePassword.path
+        Route.ChangePassword.path,
+        Route.EditProfile.path // ✅ NUEVO
     )
 
     // Si es admin, NUNCA mostramos la barra del cliente
@@ -180,7 +180,8 @@ fun AppNavGraph(
                             popUpTo(Route.Home.path) { inclusive = true }
                         }
                     },
-                    onGoRegister = goRegister
+                    onGoRegister = goRegister,
+                    onForgotPassword = { navController.navigate(Route.ChangePassword.path) } // ✅
                 )
             }
 
@@ -268,7 +269,7 @@ fun AppNavGraph(
 
             // ---------- CARRITO ----------
             composable(Route.Cart.path) {
-                val userId by userPrefs.getUserId.collectAsState(initial = null)
+                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
 
                 CartScreen(
                     userId = userId ?: 0L,
@@ -278,7 +279,7 @@ fun AppNavGraph(
 
             // ---------- CHECKOUT ----------
             composable(Route.Checkout.path) {
-                val userId by userPrefs.getUserId.collectAsState(initial = null)
+                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
 
                 CheckoutScreen(
                     userId = userId ?: 0L,
@@ -319,7 +320,7 @@ fun AppNavGraph(
 
             // ---------- HISTORIAL CLIENTE ----------
             composable(Route.OrderHistory.path) {
-                val userId by userPrefs.getUserId.collectAsState(initial = null)
+                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
 
                 if (userId == null || userId == 0L) {
                     Column(
@@ -339,7 +340,6 @@ fun AppNavGraph(
                     MyOrdersScreen(
                         usuarioId = userId!!,
                         onOpenOrderDetails = { pedidoId ->
-                            // YA NO ESTÁ VACÍO: NAVEGA AL DETALLE
                             navController.navigate(
                                 Route.OrderDetails.createRoute(pedidoId, "client")
                             )
@@ -372,7 +372,7 @@ fun AppNavGraph(
             // ---------- MENÚ PERFIL ----------
             composable(Route.ProfileMenu.path) {
                 ProfileMenuScreen(
-                    onEditProfile = { navController.navigate(Route.Profile.path) },
+                    onProfile = { navController.navigate(Route.Profile.path) },
                     onHistory = { navController.navigate(Route.OrderHistory.path) },
                     onLogout = { onLoggedOut() }
                 )
@@ -383,12 +383,22 @@ fun AppNavGraph(
                 ProfileScreen(
                     authViewModel = authViewModel,
                     onLoggedOut = { onLoggedOut() },
-                    onGoChangePassword = { navController.navigate(Route.ChangePassword.path) }
+                    onGoChangePassword = { navController.navigate(Route.ChangePassword.path) },
+                    onGoEditProfile = { navController.navigate(Route.EditProfile.path) }
                 )
             }
 
+            // ---------- EDITAR PERFIL (screen nueva) ----------
+            composable(Route.EditProfile.path) {
+                EditProfileScreen(
+                    authViewModel = authViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ---------- RECUPERAR CONTRASEÑA ----------
             composable(Route.ChangePassword.path) {
-                ChangePasswordScreen(
+                RecoverPasswordScreen(
                     authViewModel = authViewModel,
                     onBack = { navController.popBackStack() }
                 )
@@ -462,7 +472,6 @@ fun AppNavGraph(
             composable(Route.AdminOrders.path) {
                 AdminOrdersScreen(
                     onOpenOrderDetails = { pedidoId ->
-                        // AHORA SÍ NAVEGA (ANTES ESTABA VACÍO)
                         navController.navigate(
                             Route.OrderDetails.createRoute(pedidoId, "admin")
                         )

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileMenuScreen(
-    onEditProfile: () -> Unit,
+    onProfile: () -> Unit,
     onHistory: () -> Unit,
     onLogout: () -> Unit,
     historyLabel: String = "Mis órdenes"
@@ -38,8 +38,8 @@ fun ProfileMenuScreen(
 
             ProfileMenuItem(
                 icon = Icons.Default.Person,
-                label = "Editar perfil",
-                onClick = onEditProfile
+                label = "Perfil",
+                onClick = onProfile
             )
 
             ProfileMenuItem(
