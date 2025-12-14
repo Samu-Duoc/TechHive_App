@@ -33,105 +33,84 @@ class UserRepository(
 ) {
 
     // LOGIN
-    suspend fun login(email: String, password: String): Result<LoginResponseDto> {
-        return try {
-            val response = authApi.login(LoginRequestDto(email, password))
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun login(email: String, password: String): Result<LoginResponseDto> = try {
+        Result.success(authApi.login(LoginRequestDto(email, password)))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // REGISTRO
-    suspend fun register(dto: RegisterRequestDto): Result<LoginResponseDto> {
-        return try {
-            val response = authApi.register(dto)
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun register(dto: RegisterRequestDto): Result<LoginResponseDto> = try {
+        Result.success(authApi.register(dto))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
-    // GUARDAR USUARIO EN LOCAL (si lo sigues usando)
+    // GUARDAR USUARIO EN LOCAL
     suspend fun saveLocalUser(entity: UserEntity) {
         userDao.insert(entity)
     }
 
     // PERFIL DESDE MICROSERVICIO
-    suspend fun getUserProfileFromMs(email: String): Result<UserProfile> {
-        return try {
-            val users = authApi.getAllUsers()
-            val user = users.firstOrNull { it.email.equals(email, ignoreCase = true) }
+    suspend fun getUserProfileFromMs(email: String): Result<UserProfile> = try {
+        val users = authApi.getAllUsers()
+        val user = users.firstOrNull { it.email.equals(email, ignoreCase = true) }
+            ?: return Result.failure(Exception("Usuario no encontrado en MS"))
 
-            if (user != null) {
-                val profile = UserProfile(
-                    id = user.id,
-                    nombre = user.nombre,
-                    apellido = user.apellido,
-                    email = user.email,
-                    rut = user.rut,
-                    direccion = user.direccion,
-                    telefono = user.telefono,
-                    role = user.rol
-                )
-                Result.success(profile)
-            } else {
-                Result.failure(Exception("Usuario no encontrado en MS"))
-            }
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+        val profile = UserProfile(
+            id = user.id,
+            nombre = user.nombre,
+            apellido = user.apellido,
+            email = user.email,
+            rut = user.rut,
+            direccion = user.direccion,
+            telefono = user.telefono,
+            role = user.rol
+        )
+        Result.success(profile)
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // UPDATE PERFIL (sin password)
-    suspend fun updateProfile(id: Long, dto: UpdateProfileDto): Result<UsuarioDTO> {
-        return try {
-            Result.success(authApi.updateProfile(id, dto))
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun updateProfile(id: Long, dto: UpdateProfileDto): Result<UsuarioDTO> = try {
+        Result.success(authApi.updateProfile(id, dto))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // UPDATE USUARIO COMPLETO (si lo usas)
-    suspend fun updateUser(id: Long, dto: RegisterRequestDto): Result<UsuarioDTO> {
-        return try {
-            Result.success(authApi.updateUser(id, dto))
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun updateUser(id: Long, dto: RegisterRequestDto): Result<UsuarioDTO> = try {
+        Result.success(authApi.updateUser(id, dto))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // CAMBIAR CONTRASEÑA
-    suspend fun changePassword(id: Long, dto: ChangePasswordDto): Result<String> {
-        return try {
-            Result.success(authApi.changePassword(id, dto))
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun changePassword(id: Long, dto: ChangePasswordDto): Result<String> = try {
+        Result.success(authApi.changePassword(id, dto))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // RECUPERAR CONTRASEÑA POR PREGUNTA (segura)
-    suspend fun recoverPasswordSecure(dto: RecoverPasswordSecureDto): Result<String> {
-        return try {
-            Result.success(authApi.recoverPasswordSecure(dto))
-        } catch (e: Exception) {
-            Result.failure(Exception(readableError(e)))
-        }
+    suspend fun recoverPasswordSecure(dto: RecoverPasswordSecureDto): Result<String> = try {
+        Result.success(authApi.recoverPasswordSecure(dto))
+    } catch (e: Exception) {
+        Result.failure(Exception(readableError(e)))
     }
 
     // ERRORES LEGIBLES
-    private fun readableError(e: Throwable): String {
-        return when (e) {
-            is HttpException -> when (e.code()) {
-                400 -> "Datos inválidos. Revisa los campos."
-                401 -> "Credenciales incorrectas."
-                404 -> "Servicio no disponible (ruta no encontrada)."
-                409 -> "Este email ya está registrado."
-                500 -> "Error del servidor. Intenta nuevamente."
-                else -> "Error HTTP ${e.code()}."
-            }
-            is IOException -> "Sin conexión. Revisa tu internet o el servidor."
-            else -> e.message ?: "Error desconocido."
+    private fun readableError(e: Throwable): String = when (e) {
+        is HttpException -> when (e.code()) {
+            400 -> "Datos inválidos. Revisa los campos."
+            401 -> "Credenciales incorrectas."
+            404 -> "Servicio no disponible (ruta no encontrada)."
+            409 -> "Este email ya está registrado."
+            500 -> "Error del servidor. Intenta nuevamente."
+            else -> "Error HTTP ${e.code()}."
         }
+        is IOException -> "Sin conexión. Revisa tu internet o el servidor."
+        else -> e.message ?: "Error desconocido."
     }
 }
