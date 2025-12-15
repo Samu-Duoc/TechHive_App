@@ -68,6 +68,7 @@ fun AppNavGraph(
 
     val isLoggedIn by userPrefs.isLoggedIn.collectAsStateWithLifecycle(initialValue = false)
     val userEmail by userPrefs.userEmail.collectAsStateWithLifecycle(initialValue = null)
+    val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
 
     val role by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
     val isAdminUser = role?.equals("ADMIN", ignoreCase = true) == true
@@ -76,24 +77,42 @@ fun AppNavGraph(
     val goHome: () -> Unit = {
         navController.navigate(Route.Home.path) {
             popUpTo(Route.Home.path) { inclusive = true }
+            launchSingleTop = true
         }
     }
-    val goLogin: () -> Unit = { navController.navigate(Route.Login.path) }
+
+    // ✅ LOGIN LIMPIA BACKSTACK (para que no vuelva a pantallas privadas)
+    val goLogin: () -> Unit = {
+        navController.navigate(Route.Login.path) {
+            popUpTo(0) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
     val goRegister: () -> Unit = { navController.navigate(Route.Register.path) }
+
     val goInicio: () -> Unit = {
         navController.navigate(Route.Inicio.path) {
             popUpTo(0) { inclusive = true }
+            launchSingleTop = true
         }
     }
+
     val goProducts: () -> Unit = { navController.navigate(Route.ProductList.path) }
     val goToCart: () -> Unit = { navController.navigate(Route.Cart.path) }
+
     val goToProfile: () -> Unit = {
-        if (isLoggedIn) navController.navigate(Route.ProfileMenu.path) else goLogin()
+        if (isLoggedIn && !userEmail.isNullOrBlank()) {
+            navController.navigate(Route.ProfileMenu.path)
+        } else {
+            goLogin()
+        }
     }
 
+    // ✅ LOGOUT LIMPIA Y VUELVE A LOGIN
     val onLoggedOut: () -> Unit = {
         CoroutineScope(Dispatchers.IO).launch { userPrefs.clear() }
-        goHome()
+        goLogin()
     }
 
     // --- Rutas donde NO va barra de cliente ---
@@ -112,7 +131,7 @@ fun AppNavGraph(
         Route.AdminEditProduct.path,
         Route.AdminMessages.path,
         Route.ChangePassword.path,
-        Route.EditProfile.path // ✅ NUEVO
+        Route.EditProfile.path
     )
 
     // Si es admin, NUNCA mostramos la barra del cliente
@@ -127,10 +146,7 @@ fun AppNavGraph(
                     onCategories = { goProducts() },
                     onCart = { goToCart() },
                     onProfile = { goToProfile() },
-                    onLogout = {
-                        CoroutineScope(Dispatchers.IO).launch { userPrefs.clear() }
-                        goHome()
-                    }
+                    onLogout = { onLoggedOut() }
                 )
             }
         }
@@ -143,20 +159,23 @@ fun AppNavGraph(
         ) {
 
             // ---------- SPLASH ----------
+            // ✅ Decide: si hay sesión -> Inicio/Admin, si NO -> Login
             composable(Route.Splash.path) {
                 SplashScreen(
                     onTimeout = {
-                        if (isLoggedIn) {
-                            val destination =
-                                if (isAdminUser) Route.AdminHome.path else Route.Inicio.path
+                        val hasSession = isLoggedIn &&
+                                !userEmail.isNullOrBlank() &&
+                                (userId ?: 0L) > 0L
 
-                            navController.navigate(destination) {
-                                popUpTo(Route.Splash.path) { inclusive = true }
-                            }
+                        val destination = if (hasSession) {
+                            if (isAdminUser) Route.AdminHome.path else Route.Inicio.path
                         } else {
-                            navController.navigate(Route.Home.path) {
-                                popUpTo(Route.Splash.path) { inclusive = true }
-                            }
+                            Route.Login.path
+                        }
+
+                        navController.navigate(destination) {
+                            popUpTo(Route.Splash.path) { inclusive = true }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -177,11 +196,12 @@ fun AppNavGraph(
                     onLoginOkNavigateHome = {
                         val email = authViewModel.login.value.email
                         navController.navigate(Route.SplashDecision.createRoute(email)) {
-                            popUpTo(Route.Home.path) { inclusive = true }
+                            popUpTo(Route.Login.path) { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
                     onGoRegister = goRegister,
-                    onForgotPassword = { navController.navigate(Route.ChangePassword.path) } // ✅
+                    onForgotPassword = { navController.navigate(Route.ChangePassword.path) }
                 )
             }
 
@@ -208,10 +228,13 @@ fun AppNavGraph(
 
             // ---------- INICIO CLIENTE ----------
             composable(Route.Inicio.path) {
-                if (isAdminUser) {
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else if (isAdminUser) {
                     LaunchedEffect(Unit) {
                         navController.navigate(Route.AdminHome.path) {
-                            popUpTo(Route.AdminHome.path) { inclusive = true }
+                            popUpTo(Route.Inicio.path) { inclusive = true }
+                            launchSingleTop = true
                         }
                     }
                 } else {
@@ -269,35 +292,44 @@ fun AppNavGraph(
 
             // ---------- CARRITO ----------
             composable(Route.Cart.path) {
-                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
-
-                CartScreen(
-                    userId = userId ?: 0L,
-                    onGoCheckout = { navController.navigate(Route.Checkout.path) }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    CartScreen(
+                        userId = userId ?: 0L,
+                        onGoCheckout = { navController.navigate(Route.Checkout.path) }
+                    )
+                }
             }
 
             // ---------- CHECKOUT ----------
             composable(Route.Checkout.path) {
-                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
-
-                CheckoutScreen(
-                    userId = userId ?: 0L,
-                    onBack = { navController.popBackStack() },
-                    onPaidNavigateTicket = { navController.navigate(Route.Ticket.path) }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    CheckoutScreen(
+                        userId = userId ?: 0L,
+                        onBack = { navController.popBackStack() },
+                        onPaidNavigateTicket = { navController.navigate(Route.Ticket.path) }
+                    )
+                }
             }
 
             // ---------- TICKET ----------
             composable(Route.Ticket.path) {
-                TicketScreen(
-                    onGoHome = {
-                        navController.navigate(Route.Inicio.path) {
-                            popUpTo(Route.Inicio.path) { inclusive = true }
-                        }
-                    },
-                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    TicketScreen(
+                        onGoHome = {
+                            navController.navigate(Route.Inicio.path) {
+                                popUpTo(Route.Inicio.path) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onGoHistory = { navController.navigate(Route.OrderHistory.path) }
+                    )
+                }
             }
 
             // ---------- COMPROBANTE (ORDEN) ----------
@@ -305,46 +337,52 @@ fun AppNavGraph(
                 route = Route.OrderConfirmation.path,
                 arguments = listOf(navArgument("pedidoId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
-
-                OrderConfirmationScreen(
-                    pedidoId = pedidoId,
-                    onGoHome = {
-                        navController.navigate(Route.Inicio.path) {
-                            popUpTo(Route.Inicio.path) { inclusive = true }
-                        }
-                    },
-                    onGoHistory = { navController.navigate(Route.OrderHistory.path) }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
+                    OrderConfirmationScreen(
+                        pedidoId = pedidoId,
+                        onGoHome = {
+                            navController.navigate(Route.Inicio.path) {
+                                popUpTo(Route.Inicio.path) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onGoHistory = { navController.navigate(Route.OrderHistory.path) }
+                    )
+                }
             }
 
-            // ---------- HISTORIAL CLIENTE ----------
+            // ---------- HISTORIAL CLIENTE (PROTEGIDO) ----------
             composable(Route.OrderHistory.path) {
-                val userId by userPrefs.getUserId.collectAsStateWithLifecycle(initialValue = null)
-
-                if (userId == null || userId == 0L) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Debes iniciar sesión para ver tus órdenes.",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text("Vuelve a iniciar sesión e inténtalo otra vez.")
-                    }
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
                 } else {
-                    MyOrdersScreen(
-                        usuarioId = userId!!,
-                        onOpenOrderDetails = { pedidoId ->
-                            navController.navigate(
-                                Route.OrderDetails.createRoute(pedidoId, "client")
+                    if (userId == null || userId == 0L) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Debes iniciar sesión para ver tus órdenes.",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
+                            Spacer(Modifier.height(8.dp))
+                            Text("Vuelve a iniciar sesión e inténtalo otra vez.")
                         }
-                    )
+                    } else {
+                        MyOrdersScreen(
+                            usuarioId = userId!!,
+                            onOpenOrderDetails = { pedidoId ->
+                                navController.navigate(
+                                    Route.OrderDetails.createRoute(pedidoId, "client")
+                                )
+                            }
+                        )
+                    }
                 }
             }
 
@@ -356,48 +394,67 @@ fun AppNavGraph(
                     navArgument("mode") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
-                val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
-                val modeArg = backStackEntry.arguments?.getString("mode") ?: "client"
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
+                    val modeArg = backStackEntry.arguments?.getString("mode") ?: "client"
 
-                OrderDetailsScreen(
-                    pedidoId = pedidoId,
-                    mode = if (modeArg.equals("admin", ignoreCase = true))
-                        OrderViewerMode.ADMIN
-                    else
-                        OrderViewerMode.CLIENT,
-                    onBack = { navController.popBackStack() }
-                )
+                    OrderDetailsScreen(
+                        pedidoId = pedidoId,
+                        mode = if (modeArg.equals("admin", ignoreCase = true))
+                            OrderViewerMode.ADMIN
+                        else
+                            OrderViewerMode.CLIENT,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
-            // ---------- MENÚ PERFIL ----------
+            // ---------- MENÚ PERFIL (PROTEGIDO) ----------
             composable(Route.ProfileMenu.path) {
-                ProfileMenuScreen(
-                    onProfile = { navController.navigate(Route.Profile.path) },
-                    onHistory = { navController.navigate(Route.OrderHistory.path) },
-                    onLogout = { onLoggedOut() }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    ProfileMenuScreen(
+                        onProfile = { navController.navigate(Route.Profile.path) },
+                        onHistory = { navController.navigate(Route.OrderHistory.path) },
+                        onLogout = { onLoggedOut() }
+                    )
+                }
             }
 
-            // ---------- PERFIL ----------
+            // ---------- PERFIL (PROTEGIDO) ----------
             composable(Route.Profile.path) {
-                ProfileScreen(
-                    authViewModel = authViewModel,
-                    onLoggedOut = { onLoggedOut() },
-                    onGoChangePassword = { navController.navigate(Route.ChangePassword.path) },
-                    onGoEditProfile = { navController.navigate(Route.EditProfile.path) }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    ProfileScreen(
+                        authViewModel = authViewModel,
+                        onLoggedOut = { onLoggedOut() },
+                        onGoChangePassword = { navController.navigate(Route.ChangePassword.path) },
+                        onGoEditProfile = { navController.navigate(Route.EditProfile.path) }
+                    )
+                }
             }
 
-            // ---------- EDITAR PERFIL (screen nueva) ----------
+            // ---------- EDITAR PERFIL (PROTEGIDO) ----------
             composable(Route.EditProfile.path) {
-                EditProfileScreen(
-                    authViewModel = authViewModel,
-                    onBack = { navController.popBackStack() }
-                )
+                if (!isLoggedIn) {
+                    LaunchedEffect(Unit) { goLogin() }
+                } else {
+                    EditProfileScreen(
+                        authViewModel = authViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             // ---------- RECUPERAR CONTRASEÑA ----------
             composable(Route.ChangePassword.path) {
+                // Esta pantalla puede ser pública si tú quieres.
+                // Si quieres que sea SOLO con login, cambia a:
+                // if (!isLoggedIn) LaunchedEffect(Unit) { goLogin() } else { ... }
                 RecoverPasswordScreen(
                     authViewModel = authViewModel,
                     onBack = { navController.popBackStack() }
@@ -413,14 +470,15 @@ fun AppNavGraph(
 
             // PANEL ADMIN
             composable(Route.AdminHome.path) {
-                val role by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
-                val isAdmin = role?.equals("ADMIN", ignoreCase = true) == true
+                val roleNow by userPrefs.role.collectAsStateWithLifecycle(initialValue = null)
+                val isAdmin = roleNow?.equals("ADMIN", ignoreCase = true) == true
 
                 if (!isAdmin) {
                     UnauthorizedScreen(
                         onGoHome = {
                             navController.navigate(Route.Inicio.path) {
                                 popUpTo(Route.AdminHome.path) { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
                     )

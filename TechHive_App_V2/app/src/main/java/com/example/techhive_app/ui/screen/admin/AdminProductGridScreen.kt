@@ -27,7 +27,7 @@ import com.example.techhive_app.ui.viewmodel.common.ProductViewModel
 fun AdminProductGridScreen(
     productViewModel: ProductViewModel,
     onEditProduct: (Long) -> Unit,
-    onAddProduct: () -> Unit // ✅ NUEVO: ir a crear producto
+    onAddProduct: () -> Unit
 ) {
     val uiState by productViewModel.uiState.collectAsState()
     val productsForGrid = uiState.products.distinctBy { it.sku }

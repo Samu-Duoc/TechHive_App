@@ -55,7 +55,6 @@ fun InicioScreen(
         Category("Smartphones", Icons.Default.Smartphone),
         Category("Audio", Icons.Default.Headphones),
         Category("Computadores", Icons.Default.DesktopWindows),
-        Category("Reacondicionados", Icons.Default.Laptop),
         Category("Accesorios", Icons.Default.Watch),
         Category("Componentes", Icons.Default.Memory),
         Category("Consolas", Icons.Default.Gamepad),

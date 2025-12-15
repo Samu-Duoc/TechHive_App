@@ -22,6 +22,9 @@ import com.example.techhive_app.ui.util.uriToDataImage
 import com.example.techhive_app.data.remote.dto.product.ProductRemoteDto
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,9 +99,13 @@ fun ProductFormScreen(
             )
         }
     ) { padding ->
+
+        val scrollState = rememberScrollState()
+
         Column(
             modifier = Modifier
                 .padding(padding)
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -115,9 +122,7 @@ fun ProductFormScreen(
             }
 
             Button(
-                onClick = {
-                    fileLauncher.launch(arrayOf("image/*"))
-                }
+                onClick = { fileLauncher.launch(arrayOf("image/*")) }
             ) {
                 Text("Elegir imagen (Archivos / Drive)")
             }
@@ -158,7 +163,6 @@ fun ProductFormScreen(
                     else Text("Ej: SMT-APL-005 (debe ser único)")
                 }
             )
-
 
             ExposedDropdownMenuBox(
                 expanded = isCategoryMenuExpanded,
@@ -205,18 +209,9 @@ fun ProductFormScreen(
                     val priceDouble = price.replace(",", ".").toDoubleOrNull() ?: 0.0
                     val stockInt = stock.toIntOrNull() ?: 0
 
-                    // VALIDACIONES
-                    if (name.trim().isBlank()) {
-                        return@Button
-                    }
-
-                    if (priceDouble <= 0) {
-                        return@Button
-                    }
-
-                    if (stockInt <= 0) {
-                        return@Button
-                    }
+                    if (name.trim().isBlank()) return@Button
+                    if (priceDouble <= 0) return@Button
+                    if (stockInt <= 0) return@Button
 
                     val skuFinal = sku.trim()
                     if (skuFinal.isBlank()) {
@@ -245,13 +240,14 @@ fun ProductFormScreen(
                     } else {
                         productViewModel.updateRemote(productId, dto) { onFinished() }
                     }
-
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (productId == null) "Guardar producto" else "Guardar cambios")
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
+
 }

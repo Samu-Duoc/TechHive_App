@@ -23,6 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.techhive_app.data.local.storage.UserPreferences
 import com.example.techhive_app.ui.viewmodel.common.AuthViewModel
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -97,9 +99,12 @@ fun ProfileScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)   // ✅ AHORA SE PUEDE SCROLLEAR
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -205,24 +210,20 @@ fun ProfileScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // ✅ Botones (navegación)
+        //Botones (navegación)
         Button(
             onClick = onGoEditProfile,
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Editar perfil")
-        }
+        ) { Text("Editar perfil") }
 
         Spacer(Modifier.height(8.dp))
 
         Button(
             onClick = onGoChangePassword,
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Cambiar contraseña")
-        }
+        ) { Text("Cambiar contraseña") }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
 
         Button(
             onClick = {
@@ -235,5 +236,9 @@ fun ProfileScreen(
         ) {
             Text("Cerrar sesión")
         }
+
+        // ✅ Extra para que nunca quede pegado al borde/bottom bar
+        Spacer(Modifier.height(24.dp))
     }
+
 }
